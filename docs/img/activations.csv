@@ -1,0 +1,6 @@
+config,layers,best_epoch,epochs,train_loss,val_loss,loss_gap,train_acc,val_acc,acc_gap,last_acc_gap,val_macro_f1,time_s
+relu,256 relu > 128 relu > 5 softmax,6,30,0.3724,0.6542,0.2818,0.8667,0.7066,0.1601,0.2664,0.7097,97.0
+leaky_relu,256 leaky_relu > 128 leaky_relu > 5 softmax,6,30,0.3758,0.6553,0.2795,0.865,0.707,0.158,0.265,0.7102,101.9
+elu,256 elu > 128 elu > 5 softmax,30,30,0.5854,0.6527,0.0673,0.7402,0.6986,0.0417,0.0417,0.6776,113.4
+tanh,256 tanh > 128 tanh > 5 softmax,30,30,0.6291,0.6827,0.0536,0.7185,0.6849,0.0336,0.0336,0.662,96.3
+sigmoid,256 sigmoid > 128 sigmoid > 5 softmax,30,30,0.7797,0.7913,0.0117,0.6452,0.6346,0.0107,0.0107,0.6026,97.9
