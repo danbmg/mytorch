@@ -1,27 +1,31 @@
-#Fundamental .gitignore
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
 
-.vscode/
-*.out
-*.o
-*.a
-*.obj
-*~
-*lo
-*slo
-.vscode
+# Binaires générés par make
+/my_torch_analyzer
+/my_torch_generator
+
+# Données générées (splits, données du bonus) — le dataset Epitech reste dans dataset/
+data/
+bonus/data/
+
+# Sorties brutes des scripts (hpo, compare, bench) : les graphes retenus vont dans docs/img/
+results/
+
+# Réseaux générés : seuls les réseaux pré-entraînés my_torch_network_* sont poussés
+*.nn
+!my_torch_network_*.nn
+*.bak
+
+# Sujet, notes personnelles, outils
 *.pdf
-*.txt
+midterm.md
 learning.md
-.discord.env
-zip/
-.claude/
-*gcno
-*gcda
-.clang-format
-build/
-exit
 CLAUDE.md
-nanotekspice
-Nts/file/
-rom.bin
-G-OOP-400_nanotekspice/
+.claude/
+.vscode/
+*~
