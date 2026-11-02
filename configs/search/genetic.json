@@ -1,0 +1,26 @@
+{
+  "name": "genetic",
+  "description": "Genetic algorithm over the same space as random.json",
+  "base": "configs/basic.conf",
+  "method": "genetic",
+  "objective": "val_loss",
+  "population": 12,
+  "generations": 5,
+  "elite": 2,
+  "mutation_rate": 0.25,
+  "tournament": 3,
+  "epochs": 15,
+  "train_samples": 150000,
+  "val_samples": 30000,
+  "space": {
+    "hidden.layers": {"choice": [1, 2, 3]},
+    "hidden.size": {"choice": [128, 256, 512]},
+    "hidden.ratio": {"choice": [0.5, 1.0]},
+    "hidden.activation": {"choice": ["relu", "leaky_relu", "elu", "tanh"]},
+    "hidden.dropout": {"uniform": [0.0, 0.4]},
+    "optimizer.name": {"choice": ["adam", "momentum", "rmsprop"]},
+    "optimizer.lr": {"log_uniform": [0.0001, 0.01]},
+    "training.batch_size": {"choice": [64, 128, 256, 512]},
+    "training.l2": {"log_uniform": [0.000001, 0.001]}
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "name": "architecture",
+  "description": "How many hidden layers, how many neurons: every combination, same training settings",
+  "base": "configs/basic.conf",
+  "method": "grid",
+  "objective": "val_loss",
+  "epochs": 15,
+  "train_samples": 150000,
+  "val_samples": 30000,
+  "space": {
+    "hidden.layers": {"choice": [1, 2, 3]},
+    "hidden.size": {"choice": [64, 128, 256, 512]},
+    "hidden.ratio": {"value": 0.5}
+  }
+}
