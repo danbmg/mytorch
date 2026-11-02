@@ -1,124 +1,53 @@
-"""Gradient descent optimisers.
-
-`step(params, grads)` updates every parameter array in place. `lr` is a plain
-attribute so that the learning rate schedule can change it between epochs.
-"""
+"""Gradient descent optimisers. step() updates every parameter array in place;
+the schedule changes `lr` between epochs."""
 
 import numpy as np
 
+# settings of each optimiser and their default (the learning rate is apart)
+OPTIMIZERS = {
+    "sgd": {},
+    "momentum": {"momentum": 0.9},
+    "rmsprop": {"rho": 0.9, "eps": 1e-8},
+    "adam": {"beta1": 0.9, "beta2": 0.999, "eps": 1e-8},
+}
+DEFAULT_LR = {"sgd": 0.01, "momentum": 0.01, "rmsprop": 0.001, "adam": 0.001}
+
 
 class Optimizer:
-    name = ""
-
-    def __init__(self, lr):
-        self.lr = float(lr)
-
-    def step(self, params, grads):
-        raise NotImplementedError
-
-    def state(self):
-        """Arrays the optimiser keeps between steps (moments, velocity...)."""
-        return []
-
-
-class SGD(Optimizer):
-    name = "sgd"
-
-    def step(self, params, grads):
-        for p, g in zip(params, grads):
-            p -= self.lr * g
-
-
-class Momentum(Optimizer):
-    """SGD with a velocity: a running sum of past gradients damped by `momentum`."""
-
-    name = "momentum"
-
-    def __init__(self, lr, momentum=0.9, nesterov=False):
-        super().__init__(lr)
-        self.momentum = float(momentum)
-        self.nesterov = bool(nesterov)
-        self.velocity = None
-
-    def step(self, params, grads):
-        if self.velocity is None:
-            self.velocity = [np.zeros_like(p) for p in params]
-        for p, g, v in zip(params, grads, self.velocity):
-            v *= self.momentum
-            v -= self.lr * g
-            if self.nesterov:
-                # look-ahead: apply the step the velocity is about to take
-                p += self.momentum * v - self.lr * g
-            else:
-                p += v
-
-    def state(self):
-        return self.velocity or []
-
-
-class RMSprop(Optimizer):
-    """Divides each step by a running average of the squared gradient."""
-
-    name = "rmsprop"
-
-    def __init__(self, lr, rho=0.9, eps=1e-8):
-        super().__init__(lr)
-        self.rho = float(rho)
-        self.eps = float(eps)
-        self.square = None
-
-    def step(self, params, grads):
-        if self.square is None:
-            self.square = [np.zeros_like(p) for p in params]
-        for p, g, s in zip(params, grads, self.square):
-            s *= self.rho
-            s += (1 - self.rho) * g * g
-            p -= self.lr * g / (np.sqrt(s) + self.eps)
-
-    def state(self):
-        return self.square or []
-
-
-class Adam(Optimizer):
-    """Momentum (first moment) + RMSprop (second moment), both bias-corrected."""
-
-    name = "adam"
-
-    def __init__(self, lr, beta1=0.9, beta2=0.999, eps=1e-8):
-        super().__init__(lr)
-        self.beta1 = float(beta1)
-        self.beta2 = float(beta2)
-        self.eps = float(eps)
+    def __init__(self, name, lr, **settings):
+        self.name, self.lr, self.s = name, lr, settings
         self.t = 0
-        self.m = None
-        self.v = None
+        self.m = self.v = None  # first moment (velocity), second moment (squared gradients)
 
     def step(self, params, grads):
         if self.m is None:
             self.m = [np.zeros_like(p) for p in params]
-            self.v = [np.zeros_like(p) for p in params]
+            self.v = [np.zeros_like(p) for p in params] if self.name in ("rmsprop", "adam") else self.m
         self.t += 1
-        # both moments start at 0: dividing by (1 - beta^t) removes that bias early on
-        correction1 = 1 - self.beta1 ** self.t
-        correction2 = 1 - self.beta2 ** self.t
+        s = self.s
         for p, g, m, v in zip(params, grads, self.m, self.v):
-            m *= self.beta1
-            m += (1 - self.beta1) * g
-            v *= self.beta2
-            v += (1 - self.beta2) * g * g
-            p -= self.lr * (m / correction1) / (np.sqrt(v / correction2) + self.eps)
+            if self.name == "sgd":
+                p -= self.lr * g
+            elif self.name == "momentum":
+                # velocity: running sum of the past steps, damped by `momentum`
+                m *= s["momentum"]
+                m -= self.lr * g
+                p += m
+            elif self.name == "rmsprop":
+                # each step divided by the running RMS of its gradient
+                v *= s["rho"]
+                v += (1 - s["rho"]) * g * g
+                p -= self.lr * g / (np.sqrt(v) + s["eps"])
+            else:
+                # adam = momentum + rmsprop; both moments start at 0, hence the (1 - beta^t) correction
+                m *= s["beta1"]
+                m += (1 - s["beta1"]) * g
+                v *= s["beta2"]
+                v += (1 - s["beta2"]) * g * g
+                p -= self.lr * (m / (1 - s["beta1"] ** self.t)) / (np.sqrt(v / (1 - s["beta2"] ** self.t)) + s["eps"])
 
     def state(self):
-        return (self.m or []) + (self.v or [])
-
-
-OPTIMIZERS = {cls.name: cls for cls in (SGD, Momentum, RMSprop, Adam)}
-
-
-def make_optimizer(spec):
-    """Build an optimiser from its config, e.g. {"name": "adam", "lr": 0.001}."""
-    spec = dict(spec)
-    name = spec.pop("name")
-    if name not in OPTIMIZERS:
-        raise ValueError(f"unknown optimizer '{name}' (choices: {', '.join(OPTIMIZERS)})")
-    return OPTIMIZERS[name](**spec)
+        """Arrays kept between steps (flushed of subnormal floats along with the weights)."""
+        if self.m is None or self.name == "sgd":
+            return []
+        return self.m + (self.v if self.v is not self.m else [])

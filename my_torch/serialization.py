@@ -1,15 +1,13 @@
-"""Network files (.nn).
+"""Network files (.nn): a numpy .npz archive (zip) holding
 
-A .nn file is a numpy .npz archive (a zip) holding:
 - `header`: UTF-8 JSON, readable as is (`unzip -p FILE.nn header.npy`): format
-  version, full config (layers, activation of each layer, init, optimizer,
-  learning rate and schedule, regularisation, seed), labels, training metadata
-  and history;
-- `W0, b0, W1, b1, ...`: weights and biases of each layer, raw binary
-  float32/float64 (exact values, compact, fast to load).
+  version, full config (layers, activation of each layer, optimizer, learning
+  rate and schedule, regularisation, seed), labels, training metadata and history;
+- `W0, b0, W1, b1...`: weights and biases in raw binary float32 (exact, 3x smaller
+  than text, fast to load).
 
-Writes are atomic: the file is written next to its target then renamed over
-it, so an interrupted save never leaves a half-written network behind.
+Writes are atomic: written next to the target, then renamed over it, so an
+interrupted save never leaves a half-written network.
 """
 
 import datetime
@@ -25,54 +23,35 @@ import numpy as np
 from .config import ConfigError
 from .network import Network
 
-FORMAT = "my_torch.nn"
-FORMAT_VERSION = 1
+FORMAT, FORMAT_VERSION = "my_torch.nn", 1
 
 
 class NetworkFormatError(ValueError):
     pass
 
 
-def _header(net):
-    return {
-        "format": FORMAT,
-        "format_version": FORMAT_VERSION,
+def save_network(net, path, backup=False):
+    """Write `net` to `path` atomically. backup=True keeps the replaced file as `path`.bak."""
+    header = {
+        "format": FORMAT, "format_version": FORMAT_VERSION,
         "created": datetime.datetime.now().astimezone().isoformat(timespec="seconds"),
-        "config": net.config,
-        "labels": net.labels,
-        "meta": net.meta,
-        "layers": [
-            {"name": f"W{i}/b{i}", "inputs": layer.n_in, "outputs": layer.n_out,
-             "activation": spec["activation"], "params": layer.n_params}
-            for i, (layer, spec) in enumerate(zip(net.layers, net.config["layers"]))
-        ],
+        "config": net.config, "labels": net.labels, "meta": net.meta,
+        "layers": [{"name": f"W{i}/b{i}", "inputs": layer.W.shape[0], "outputs": layer.W.shape[1],
+                    "activation": layer.activation, "params": layer.n_params} for i, layer in enumerate(net.layers)],
         "history": net.history,
     }
-
-
-def _file_mode(path):
-    """Permissions for the new file: those of the file it replaces, else the umask default."""
-    if os.path.exists(path):
-        return os.stat(path).st_mode & 0o777
-    umask = os.umask(0)
-    os.umask(umask)
-    return 0o666 & ~umask
-
-
-def save_network(net, path, backup=False):
-    """Write `net` to `path` atomically. backup=True: keep the old file as `path`.bak."""
-    header = json.dumps(_header(net), indent=2).encode("utf-8")
-    arrays = {"header": np.frombuffer(header, dtype=np.uint8)}
+    arrays = {"header": np.frombuffer(json.dumps(header, indent=2).encode("utf-8"), dtype=np.uint8)}
     for i, layer in enumerate(net.layers):
-        arrays[f"W{i}"] = layer.W
-        arrays[f"b{i}"] = layer.b
-    directory = os.path.dirname(os.path.abspath(path))
-    fd, tmp = tempfile.mkstemp(prefix=".", suffix=".nn.tmp", dir=directory)
+        arrays[f"W{i}"], arrays[f"b{i}"] = layer.W, layer.b
+    fd, tmp = tempfile.mkstemp(prefix=".", suffix=".nn.tmp", dir=os.path.dirname(os.path.abspath(path)))
     try:
         # a file object, not a name: np.savez("x.nn") would write "x.nn.npz"
         with os.fdopen(fd, "wb") as f:
             np.savez(f, **arrays)
-        os.chmod(tmp, _file_mode(path))
+        # mkstemp creates a private file: give it the permissions of the file it replaces, else the usual ones
+        umask = os.umask(0)
+        os.umask(umask)
+        os.chmod(tmp, os.stat(path).st_mode & 0o777 if os.path.exists(path) else 0o666 & ~umask)
         if backup and os.path.exists(path):
             shutil.copy2(path, path + ".bak")
         os.replace(tmp, path)
@@ -82,36 +61,19 @@ def save_network(net, path, backup=False):
         raise
 
 
-def read_header(path):
-    """Header of a .nn file, without building the network."""
-    with _open(path) as data:
-        return _parse_header(path, data)
-
-
 def _open(path):
-    if not os.path.exists(path):
-        raise NetworkFormatError(f"{path}: no such file")
-    if os.path.isdir(path):
-        raise NetworkFormatError(f"{path}: is a directory")
+    if not os.path.isfile(path):
+        raise NetworkFormatError(f"{path}: {'is a directory' if os.path.isdir(path) else 'no such file'}")
     try:
-        # read in memory first (about 1 MB): no file left open when the archive is broken
+        # read in memory first (a few MB): no file left open if the archive is broken
         with open(path, "rb") as f:
-            raw = io.BytesIO(f.read())
+            data = np.load(io.BytesIO(f.read()), allow_pickle=False)
     except OSError as e:
-        raise NetworkFormatError(f"{path}: {e.strerror}") from None
-    try:
-        data = np.load(raw, allow_pickle=False)
-    except (ValueError, OSError, EOFError, zipfile.BadZipFile) as e:
+        raise NetworkFormatError(f"{path}: {e.strerror or e}") from None
+    except (ValueError, EOFError, zipfile.BadZipFile) as e:
         raise NetworkFormatError(f"{path}: not a my_torch network file ({e})") from None
-    if not hasattr(data, "files"):
-        # a plain .npy array, not an archive
+    if not hasattr(data, "files") or "header" not in data.files:
         raise NetworkFormatError(f"{path}: not a my_torch network file")
-    return data
-
-
-def _parse_header(path, data):
-    if "header" not in data.files:
-        raise NetworkFormatError(f"{path}: not a my_torch network file (no header)")
     try:
         header = json.loads(bytes(data["header"]).decode("utf-8"))
     except (ValueError, UnicodeDecodeError) as e:
@@ -124,35 +86,33 @@ def _parse_header(path, data):
     if version > FORMAT_VERSION:
         raise NetworkFormatError(f"{path}: format version {version} is newer than this program"
                                  f" (supports up to {FORMAT_VERSION})")
-    return _upgrade(header)
+    return data, _upgrade(header)
 
 
 def _upgrade(header):
-    """Convert headers of older format versions to the current one (none yet)."""
+    """Where headers of older format versions will be converted to the current one (none yet)."""
     return header
+
+
+def read_header(path):
+    """Header of a .nn file, without building the network."""
+    return _open(path)[1]
 
 
 def load_network(path):
     """Rebuild a Network from a .nn file. Raises NetworkFormatError if the file is unusable."""
-    data = _open(path)
+    data, header = _open(path)
     with data:
-        header = _parse_header(path, data)
         try:
             net = Network(header["config"])
         except (KeyError, ConfigError) as e:
             raise NetworkFormatError(f"{path}: invalid network config ({e})") from None
-        weights = []
-        for i in range(len(net.layers)):
-            try:
-                weights.append((data[f"W{i}"], data[f"b{i}"]))
-            except KeyError:
-                raise NetworkFormatError(f"{path}: missing weights of layer {i}") from None
-            except (ValueError, OSError, zipfile.BadZipFile) as e:
-                raise NetworkFormatError(f"{path}: corrupted weights of layer {i} ({e})") from None
         try:
-            net.set_weights(weights)
-        except ValueError as e:
-            raise NetworkFormatError(f"{path}: {e}") from None
+            net.set_weights([(data[f"W{i}"], data[f"b{i}"]) for i in range(len(net.layers))])
+        except KeyError as e:
+            raise NetworkFormatError(f"{path}: missing weights {e}") from None
+        except (ValueError, OSError, zipfile.BadZipFile) as e:
+            raise NetworkFormatError(f"{path}: corrupted weights ({e})") from None
     net.meta.update(header.get("meta") or {})
     net.history = header.get("history") or {}
     return net

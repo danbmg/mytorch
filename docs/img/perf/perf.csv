@@ -1,0 +1,15 @@
+bench,setting,value,unit
+threads,1 thread,1.349,s/epoch
+threads,2 threads,1.045,s/epoch
+threads,4 threads,0.928,s/epoch
+threads,8 threads,1.182,s/epoch
+dtype,float64,3.189,s/epoch
+dtype,float32,1.351,s/epoch
+vectorization,batch 1,738,samples/s
+vectorization,batch 256,73413,samples/s
+subnormal,without flush,0.356,s/epoch (last 5 of 30)
+subnormal,with flush,0.283,s/epoch (last 5 of 30)
+speedup,1 workers,1.0,"x faster than 1 worker (16 trainings, 62.4s)"
+speedup,2 workers,1.73,"x faster than 1 worker (16 trainings, 36.1s)"
+speedup,4 workers,2.56,"x faster than 1 worker (16 trainings, 24.4s)"
+speedup,8 workers,2.38,"x faster than 1 worker (16 trainings, 26.2s)"
