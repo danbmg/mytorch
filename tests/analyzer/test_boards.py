@@ -5,8 +5,8 @@ from unittest import mock
 
 import numpy as np
 
-from analyzer import dataset
-from analyzer.dataset import ChessFileError, parse_boards, read_boards
+from analyzer import boards
+from analyzer.boards import ChessFileError, parse_boards, read_boards
 from analyzer.labels import LABELS
 from helpers import FIXTURE
 
@@ -16,7 +16,7 @@ KINGS = "8/8/8/8/8/8/k7/K7 b - - 0 1"
 class TestBoards(unittest.TestCase):
     def test_fixture_chunks_and_labels(self):
         X, y = read_boards(FIXTURE, LABELS, require_labels=True)
-        with mock.patch.object(dataset, "ENCODE_CHUNK", 5):
+        with mock.patch.object(boards, "ENCODE_CHUNK", 5):
             X5, _ = read_boards(FIXTURE, LABELS)
         np.testing.assert_array_equal(X, X5)
         self.assertEqual((X.shape, y[0]), ((24, 773), 1))

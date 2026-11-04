@@ -22,7 +22,8 @@ import time
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, ROOT)
 
-from analyzer.dataset import parse_boards, stratified_split  # noqa: E402
+from analyzer.boards import parse_boards  # noqa: E402
+from analyzer.split import stratified_split  # noqa: E402
 from analyzer.fen import position_key  # noqa: E402
 from analyzer.labels import LABELS  # noqa: E402
 from bonus.movegen import Board, attacked, in_check, legal_moves  # noqa: E402

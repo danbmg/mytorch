@@ -4,7 +4,7 @@ import unittest
 
 import numpy as np
 
-from analyzer.dataset import deduplicate, stratified_split
+from analyzer.split import deduplicate, stratified_split
 
 
 class TestSplit(unittest.TestCase):

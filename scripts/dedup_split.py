@@ -18,7 +18,8 @@ import sys
 
 from common import ROOT, fail
 
-from analyzer.dataset import ChessFileError, deduplicate, parse_boards, read_lines, stratified_split
+from analyzer.boards import ChessFileError, parse_boards, read_lines
+from analyzer.split import deduplicate, stratified_split
 from analyzer.fen import parse_fen, position_key, split_line
 from analyzer.labels import LABELS, label_index
 

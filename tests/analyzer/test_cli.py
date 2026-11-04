@@ -8,7 +8,7 @@ import unittest
 
 import numpy as np
 
-from analyzer.dataset import read_boards
+from analyzer.boards import read_boards
 from analyzer.labels import LABELS
 from analyzer.main import main
 from helpers import FIXTURE, run_main
