@@ -1,12 +1,14 @@
 #!/usr/bin/env python3
 """Train one network on the encoded dataset, save it and write its training report (T1.12).
 
-usage: python3 scripts/train.py CONFIG --data data/chess.npz --out NET.nn [--report DIR] [--epochs N] [--report-only]
+usage: python3 scripts/train.py CONFIG --data data/chess.npz --out NET.nn [--report DIR] [--epochs N] [--flip-colors] [--report-only]
 
 The report (default results/<name>/): curves.png (loss, accuracy, learning rate per
 epoch, train dashed / validation solid, redrawn after every epoch: it can be
 watched live), confusion.png and report.md (per-class precision / recall / F1 and
 per-subset results on the test set). An existing NET.nn is kept as NET.nn.bak.
+--flip-colors doubles the training boards with their colour-inverted mirror (analyzer/augment.py);
+validation and test are never augmented.
 --report-only trains nothing: it rewrites the report of NET.nn (its history is in the file).
 """
 
@@ -18,6 +20,7 @@ os.environ.setdefault("MY_TORCH_THREADS", "2")  # one training: 2 BLAS threads (
 
 from common import COLORS, describe_layers, fail, figure, load_dataset, load_json, save_figure  # noqa: E402
 
+from analyzer.augment import flip_colors  # noqa: E402
 from my_torch import ConfigError, Network, NetworkFormatError, TrainingError, load_network  # noqa: E402
 from my_torch.metrics import confusion_matrix, per_class, report  # noqa: E402
 
@@ -73,6 +76,7 @@ def main(argv):
     p.add_argument("--out", required=True)
     p.add_argument("--report")
     p.add_argument("--epochs", type=int)
+    p.add_argument("--flip-colors", action="store_true", dest="flip_colors")
     p.add_argument("--report-only", action="store_true", dest="report_only")
     args = p.parse_args(argv)
     config = load_json(args.config)
@@ -92,6 +96,11 @@ def main(argv):
             net = Network(config)
         except ConfigError as e:
             fail(f"{args.config}: {e}")
+        if args.flip_colors:
+            # training boards only: validation and test stay as they are
+            X_flip, Y_flip = flip_colors(data["X_train"], data["Y_train"], net.labels)
+            data["X_train"], data["Y_train"] = np.concatenate([data["X_train"], X_flip]), np.concatenate([data["Y_train"], Y_flip])
+            print(f"colour flip augmentation: {len(X_flip)} mirrored boards added to the training set", file=sys.stderr)
         print(f"{name}: {describe_layers(net.config)}, {net.n_params} parameters,"
               f" {len(data['X_train'])} training / {len(data['X_val'])} validation boards", file=sys.stderr)
         live = lambda epoch, h: draw_curves(h, os.path.join(out_dir, "curves.png"), f"{name}: epoch {epoch}")  # noqa: E731

@@ -3,14 +3,15 @@
 import numpy as np
 
 from . import activations
-from .init import INITS
+from .errors import lookup
+from .initializers import INITS
 
 
 class Dense:
     def __init__(self, n_in, n_out, spec, rng, dtype):
         """spec: normalized layer config {"size", "activation", ["alpha"], "dropout", "init"}."""
         self.activation, self.alpha, self.dropout = spec["activation"], spec.get("alpha", 0.0), spec["dropout"]
-        self.W = INITS[spec["init"]](n_in, n_out, rng).astype(dtype)
+        self.W = lookup(INITS, spec["init"], "init")(n_in, n_out, rng).astype(dtype)
         self.b = np.zeros(n_out, dtype=dtype)
         self.x = self.z = self.a = self.mask = self.dW = self.db = None
 

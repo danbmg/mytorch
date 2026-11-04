@@ -1,5 +1,9 @@
 """Initial weights. Goal: keep the variance of the signal about constant from one
-layer to the next, so that it neither vanishes nor explodes. Biases start at 0."""
+layer to the next, so that it neither vanishes nor explodes. Biases start at 0.
+
+A registry name -> function; "auto" picks the initialisation each activation was
+designed with, so a configuration only has to say it when it wants another one.
+"""
 
 import numpy as np
 
