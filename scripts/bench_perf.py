@@ -19,7 +19,7 @@ import time
 
 from common import COLORS, ROOT, fail, figure, load_dataset, load_json, save_figure, write_csv
 
-import my_torch.network as network_module
+import my_torch.training.batch as batch_module
 from my_torch.config import normalize_config
 from my_torch.network import Network
 from my_torch.parallel import train_many
@@ -67,12 +67,12 @@ def main(argv):
     for batch, n in ((1, 2000), (256, len(X))):
         add("vectorization", f"batch {batch}", n / epoch_time(config, X[:n], Y[:n], epochs=1, batch_size=batch), "samples/s")
     # in this process: the flush period is a module constant
-    default = network_module.FLUSH_EVERY
+    default = batch_module.FLUSH_EVERY
     for label, every in (("without flush", 10**12), ("with flush", default)):
-        network_module.FLUSH_EVERY = every
+        batch_module.FLUSH_EVERY = every
         history = Network(plain(config, epochs=30, l2=0.001)).fit(X[:20000], Y[:20000])
         add("subnormal", label, float(np.mean(history["time"][-5:])), "s/epoch (last 5 of 30)")
-    network_module.FLUSH_EVERY = default
+    batch_module.FLUSH_EVERY = default
     configs = [dict(plain(config, epochs=3), seed=i) for i in range(2 * cores)]
     base, workers_list, speedups = None, sorted({1, 2, 4, 8, cores} & set(range(1, cores + 1))), []
     for workers in workers_list:

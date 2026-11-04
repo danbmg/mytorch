@@ -12,20 +12,9 @@ from .errors import TrainingError
 from .layers import Dense
 from .optimizers import Optimizer
 from .schedules import Schedule
+from .training import batch
 
 PREDICT_BATCH = 8192  # rows per chunk when predicting (bounds memory, not results)
-FLUSH_EVERY = 100  # optimisation steps between two flush_subnormals()
-
-
-def flush_subnormals(arrays):
-    """Set to 0 the values too small to be normal floats (< 1.2e-38 in float32).
-
-    With L2, weights that never receive a gradient (an input always 0, such as a
-    pawn on rank 8) shrink towards 0 forever; once subnormal, every operation on
-    them is 10-100x slower on the CPU. 0 is their optimum anyway.
-    """
-    for a in arrays:
-        np.putmask(a, np.abs(a) < np.finfo(a.dtype).tiny, 0)
 
 
 class Network:
@@ -159,7 +148,7 @@ class Network:
         if cfg["early_stopping"] and not has_val and verbose:
             print("early stopping needs validation data: disabled", file=log)
 
-        n, bs, l2, epochs = len(X), cfg["batch_size"], cfg["l2"], cfg["epochs"]
+        n, bs, epochs = len(X), cfg["batch_size"], cfg["epochs"]
         opt = Optimizer(**self.config["optimizer"])
         sched = Schedule(self.config["lr_schedule"], opt.lr, epochs)
         params = [p for layer in self.layers for p in (layer.W, layer.b)]
@@ -184,22 +173,11 @@ class Network:
                 run_loss, run_correct = 0.0, 0
                 for b, start in enumerate(range(0, n, bs)):
                     idx = order[start:start + bs]
-                    xb, yb = X[idx], Y[idx]
-                    out = self._forward(xb, training=True, rng=rng)
-                    run_loss += self._loss(out, yb) * len(idx)
-                    run_correct += int((self._decide(out) == self._decide(yb)).sum())
-                    self._backward(out, yb)
-                    grads = [g for layer in self.layers for g in (layer.dW + l2 * layer.W if l2 else layer.dW, layer.db)]
-                    if cfg["grad_clip"]:
-                        # one scale for every gradient: the direction of the step is kept
-                        norm = math.sqrt(sum(float((g * g).sum()) for g in grads))
-                        if norm > cfg["grad_clip"]:
-                            for g in grads:
-                                g *= cfg["grad_clip"] / (norm + 1e-12)
-                    opt.step(params, grads)
+                    loss, correct = batch.train_batch(self, opt, params, X[idx], Y[idx], cfg, rng)
+                    run_loss, run_correct = run_loss + loss, run_correct + correct
                     steps += 1
-                    if steps % FLUSH_EVERY == 0:
-                        flush_subnormals(params + opt.state())
+                    if steps % batch.FLUSH_EVERY == 0:
+                        batch.flush_subnormals(params + opt.state())
                     if progress and b % max(1, n_batches // 50) == 0:
                         print(f"\r\033[Kepoch {epoch}: {100 * b // n_batches}%", end="", file=log, flush=True)
                 if not math.isfinite(run_loss):

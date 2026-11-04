@@ -6,7 +6,7 @@ import numpy as np
 
 from helpers import XOR_X, XOR_Y, xor_config
 from my_torch import Network
-from my_torch.network import flush_subnormals
+from my_torch.training.batch import flush_subnormals
 
 
 class TestRegularisation(unittest.TestCase):
