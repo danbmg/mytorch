@@ -16,9 +16,10 @@ if "numpy" not in _sys.modules and _threads != "auto":
     for _var in ("OPENBLAS_NUM_THREADS", "OMP_NUM_THREADS", "MKL_NUM_THREADS"):
         _os.environ.setdefault(_var, _threads)
 
-from .config import ConfigError, normalize_config  # noqa: E402
-from .network import Network, TrainingError  # noqa: E402
-from .serialization import NetworkFormatError, load_network, read_header, save_network  # noqa: E402
+from .config import normalize_config  # noqa: E402
+from .errors import ConfigError, NetworkFormatError, TrainingError  # noqa: E402
+from .network import Network  # noqa: E402
+from .serialization import load_network, read_header, save_network  # noqa: E402
 
 __all__ = ["ConfigError", "Network", "NetworkFormatError", "TrainingError", "load_network",
            "normalize_config", "read_header", "save_network"]

@@ -9,14 +9,11 @@ import copy
 import numbers
 
 from .activations import ACTIVATIONS, ALPHA
-from .init import INITS, resolve
+from .errors import ConfigError, lookup
+from .initializers import INITS, resolve
 from .losses import LOSSES
 from .optimizers import DEFAULT_LR, OPTIMIZERS
 from .schedules import SCHEDULES
-
-
-class ConfigError(ValueError):
-    pass
 
 
 TRAINING = {
@@ -85,7 +82,7 @@ def _layers(layers, default_init):
         where = f"layers[{i}]"
         _check(isinstance(layer, dict), where, 'must be an object like {"size": 128, "activation": "relu"}')
         act = layer.get("activation")
-        _check(act in ACTIVATIONS, f"{where}.activation", f"unknown '{act}' (choices: {', '.join(ACTIVATIONS)})")
+        lookup(ACTIVATIONS, act, f"{where}.activation")
         alpha = {"alpha": ALPHA[act]} if act in ALPHA else {}
         _keys(layer, ("size", "activation", "dropout", "init", *alpha), where)
         _check(_int(layer.get("size")), f"{where}.size", "must be a positive integer")

@@ -8,16 +8,13 @@ import numpy as np
 
 from . import losses
 from .config import TRAINING, normalize_config, normalize_training
+from .errors import TrainingError
 from .layers import Dense
 from .optimizers import Optimizer
 from .schedules import Schedule
 
 PREDICT_BATCH = 8192  # rows per chunk when predicting (bounds memory, not results)
 FLUSH_EVERY = 100  # optimisation steps between two flush_subnormals()
-
-
-class TrainingError(RuntimeError):
-    pass
 
 
 def flush_subnormals(arrays):

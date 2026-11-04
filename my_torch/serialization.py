@@ -20,14 +20,10 @@ import zipfile
 
 import numpy as np
 
-from .config import ConfigError
+from .errors import ConfigError, NetworkFormatError
 from .network import Network
 
 FORMAT, FORMAT_VERSION = "my_torch.nn", 1
-
-
-class NetworkFormatError(ValueError):
-    pass
 
 
 def save_network(net, path, backup=False):

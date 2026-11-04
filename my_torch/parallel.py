@@ -15,7 +15,8 @@ from multiprocessing import shared_memory
 import numpy as np
 
 from .metrics import confusion_matrix, macro_f1
-from .network import Network, TrainingError
+from .errors import TrainingError
+from .network import Network
 
 THREAD_VARS = ("OPENBLAS_NUM_THREADS", "OMP_NUM_THREADS", "MKL_NUM_THREADS")
 _DATA = {}  # arrays seen by the trainings of this process
