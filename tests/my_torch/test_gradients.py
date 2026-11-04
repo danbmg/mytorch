@@ -6,6 +6,7 @@ import numpy as np
 
 from helpers import numeric_grad, rel_error
 from my_torch import Network, activations
+from my_torch.data import targets
 
 
 class TestGradients(unittest.TestCase):
@@ -16,7 +17,7 @@ class TestGradients(unittest.TestCase):
         net = Network({"input_size": 5, "layers": [{"size": 6, "activation": hidden}, {"size": 4, "activation": hidden},
                                                    {"size": n_out, "activation": output}],
                        "loss": loss, "dtype": "float64", "seed": 7})
-        Y = net._targets(Y, len(X))
+        Y = targets(net, Y, len(X))
         total = lambda: net._loss(net._forward(X), Y) + 0.5 * l2 * sum((layer.W ** 2).sum() for layer in net.layers)  # noqa: E731
         net._backward(net._forward(X), Y)
         analytic = [(layer.dW + l2 * layer.W, layer.db) for layer in net.layers]
