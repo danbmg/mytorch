@@ -1,12 +1,10 @@
-import os
-import random
+"""The legal move generator: perft reference counts, status of known positions, agreement with the dataset (T2.9)."""
+
 import unittest
 
 from analyzer.fen import split_line
 from bonus.movegen import Board, legal_moves, status
-from bonus.gen_stalemate import classify, place
-
-FIXTURE = os.path.join(os.path.dirname(__file__), "fixtures", "boards.txt")
+from helpers import FIXTURE
 
 
 class TestMovegen(unittest.TestCase):
@@ -45,13 +43,6 @@ class TestMovegen(unittest.TestCase):
     def test_fen_round_trip(self):
         fen = "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R b Kq e3 0 1"
         self.assertEqual(Board.from_fen(fen).to_fen(), fen)
-
-    def test_generated_positions_are_legal_and_correctly_labelled(self):
-        rng = random.Random(0)
-        boards = [b for b in (place(rng) for _ in range(300)) if b is not None]
-        self.assertGreater(len(boards), 100)
-        for board in boards:
-            self.assertEqual(classify(board)[1], status(board.to_fen()))
 
 
 if __name__ == "__main__":

@@ -26,11 +26,17 @@ $(ANALYZER):
 $(GENERATOR):
 	$(call wrapper,generator)
 
+# pytest if installed, else unittest on every tests/<module>/ directory; one failing directory fails the target
 tests_run:
 	@if python3 -c "import pytest" 2>/dev/null; then \
 		python3 -m pytest tests/ -q; \
 	else \
-		python3 -m unittest discover -s tests -t . ; \
+		status=0; \
+		for dir in tests/*/; do \
+			ls "$$dir"test_*.py > /dev/null 2>&1 || continue; \
+			PYTHONPATH=.:tests python3 -m unittest discover -s "$$dir" -p "test_*.py" || status=1; \
+		done; \
+		exit $$status; \
 	fi
 
 clean:
