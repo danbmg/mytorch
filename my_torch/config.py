@@ -12,7 +12,7 @@ from .activations import ACTIVATIONS, ALPHA
 from .errors import ConfigError, lookup
 from .initializers import INITS, resolve
 from .losses import LOSSES
-from .optimizers import DEFAULT_LR, OPTIMIZERS
+from .optimizers import OPTIMIZERS
 from .schedules import SCHEDULES
 
 
@@ -134,11 +134,11 @@ def normalize_config(config):
     out.update(loss=loss, dtype=dtype)
 
     name, opt = _named(cfg.get("optimizer"), OPTIMIZERS, "adam", "optimizer")
-    lr = opt.pop("lr", DEFAULT_LR[name])
+    lr = opt.pop("lr", OPTIMIZERS[name].LR)
     _check(_num(lr) and lr > 0, "optimizer.lr", "must be a number > 0")
-    out["optimizer"] = {"name": name, "lr": float(lr), **_fill(opt, OPTIMIZERS[name], "optimizer")}
+    out["optimizer"] = {"name": name, "lr": float(lr), **_fill(opt, OPTIMIZERS[name].DEFAULTS, "optimizer")}
     name, sched = _named(cfg.get("lr_schedule"), SCHEDULES, "constant", "lr_schedule")
-    out["lr_schedule"] = {"name": name, **_fill(sched, SCHEDULES[name], "lr_schedule")}
+    out["lr_schedule"] = {"name": name, **_fill(sched, SCHEDULES[name].DEFAULTS, "lr_schedule")}
     out["training"] = normalize_training(cfg.get("training"))
 
     labels = cfg.get("labels")
