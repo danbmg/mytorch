@@ -12,7 +12,8 @@ from unittest import mock
 import numpy as np
 
 from helpers import XOR_X, XOR_Y, xor_config
-from my_torch import Network, NetworkFormatError, load_network, read_header, serialization
+from my_torch import Network, NetworkFormatError, load_network, read_header
+from my_torch.serialization import FORMAT_VERSION, writer
 
 
 class TestSaveFile(unittest.TestCase):
@@ -59,7 +60,7 @@ class TestSaveFile(unittest.TestCase):
         self.assertEqual(self.read(self.path + ".bak"), original)
         self.assertEqual(stat.S_IMODE(os.stat(self.path).st_mode), 0o640)
         current = self.read(self.path)
-        with mock.patch.object(serialization.np, "savez", side_effect=OSError("disk full")), self.assertRaises(OSError):
+        with mock.patch.object(writer.np, "savez", side_effect=OSError("disk full")), self.assertRaises(OSError):
             self.net.save(self.path)
         self.assertEqual(self.read(self.path), current)  # atomic: the old file is intact
         self.assertEqual(sorted(os.listdir(self.dir)), ["net.nn", "net.nn.bak"])
@@ -74,7 +75,7 @@ class TestSaveFile(unittest.TestCase):
         for path in ("missing.nn", self.dir, "empty.nn", "text.nn", other):
             with self.subTest(path=path), self.assertRaises(NetworkFormatError):
                 load_network(os.path.join(self.dir, path))
-        for change, message in ((lambda h: h.update(format_version=serialization.FORMAT_VERSION + 1), "newer"),
+        for change, message in ((lambda h: h.update(format_version=FORMAT_VERSION + 1), "newer"),
                                 (lambda h: h["config"]["layers"][0].update(activation="nope"), "invalid network config"),
                                 (lambda h: h["config"]["layers"][0].update(size=9), "corrupted weights")):
             self.net.save(self.path)
