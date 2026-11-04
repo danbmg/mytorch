@@ -14,6 +14,7 @@ from .optimizers import Optimizer
 from .schedules import Schedule
 from .training import batch
 from .training.early_stopping import EarlyStopping
+from .training.progress import Progress
 
 PREDICT_BATCH = 8192  # rows per chunk when predicting (bounds memory, not results)
 
@@ -132,7 +133,7 @@ class Network:
         each epoch. Returns the history of this call (one value per epoch per metric).
         A new call on a trained network resumes the training.
         """
-        log = log or sys.stderr
+        progress = Progress(log or sys.stderr, verbose)
         unknown = sorted(set(hp) - set(TRAINING))
         if unknown:
             raise ValueError(f"unknown training setting(s): {', '.join(unknown)}")
@@ -146,8 +147,8 @@ class Network:
             X_val = self._inputs(X_val)
             Y_val = self._targets(Y_val, len(X_val))
         es = cfg["early_stopping"] if has_val else None
-        if cfg["early_stopping"] and not has_val and verbose:
-            print("early stopping needs validation data: disabled", file=log)
+        if cfg["early_stopping"] and not has_val:
+            progress.message("early stopping needs validation data: disabled")
 
         n, bs, epochs = len(X), cfg["batch_size"], cfg["epochs"]
         opt = Optimizer(**self.config["optimizer"])
@@ -163,7 +164,6 @@ class Network:
         history = {key: [] for key in ("epoch", "train_loss", "train_acc", "val_loss", "val_acc", "lr", "time")}
         first = self.meta["epochs_trained"]
         stopping, last_loss, stopped = EarlyStopping(self, es), None, False
-        progress = verbose and getattr(log, "isatty", lambda: False)()
         n_batches, steps, t_fit = math.ceil(n / bs), 0, time.perf_counter()
         # a diverging training overflows: reported below as a TrainingError, not as numpy warnings
         with np.errstate(over="ignore", invalid="ignore"):
@@ -179,8 +179,7 @@ class Network:
                     steps += 1
                     if steps % batch.FLUSH_EVERY == 0:
                         batch.flush_subnormals(params + opt.state())
-                    if progress and b % max(1, n_batches // 50) == 0:
-                        print(f"\r\033[Kepoch {epoch}: {100 * b // n_batches}%", end="", file=log, flush=True)
+                    progress.batch(epoch, b, n_batches)
                 if not math.isfinite(run_loss):
                     raise TrainingError(f"the loss diverged (NaN/inf) at epoch {epoch}:"
                                         " lower the learning rate or enable grad_clip")
@@ -191,12 +190,7 @@ class Network:
                                    ("val_loss", val["loss"]), ("val_acc", val["accuracy"]), ("lr", opt.lr),
                                    ("time", time.perf_counter() - t0)):
                     history[key].append(value)
-                if verbose:
-                    line = f"epoch {epoch:>3}/{first + epochs}  loss {train['loss']:.4f}  acc {100 * train['accuracy']:6.2f}%"
-                    if has_val:
-                        line += f"  val_loss {val['loss']:.4f}  val_acc {100 * val['accuracy']:6.2f}%"
-                    print(("\r\033[K" if progress else "") + line + f"  lr {opt.lr:.2e}  {history['time'][-1]:.1f}s",
-                          file=log, flush=True)
+                progress.epoch(epoch, first + epochs, train, val, opt.lr, history["time"][-1])
                 if callback:
                     callback(epoch, history)
                 last_loss = val["loss"] if has_val else train["loss"]
@@ -204,11 +198,11 @@ class Network:
                     stopped = True
                     break
 
-        if stopped and verbose:
-            print(f"early stopping: no val_loss improvement for {stopping.patience} epochs", file=log)
+        if stopped:
+            progress.message(f"early stopping: no val_loss improvement for {stopping.patience} epochs")
         # keep the weights of the best validation epoch, not those of the last one
-        if stopping.restore(history["epoch"][-1]) and verbose:
-            print(f"weights of epoch {stopping.best_epoch} restored (val_loss {stopping.best_loss:.4f})", file=log)
+        if stopping.restore(history["epoch"][-1]):
+            progress.message(f"weights of epoch {stopping.best_epoch} restored (val_loss {stopping.best_loss:.4f})")
         self.meta.update(epochs_trained=first + len(history["epoch"]), train_samples=n, stopped_early=stopped,
                          train_time=self.meta["train_time"] + time.perf_counter() - t_fit)
         if stopping.best_epoch is not None:
