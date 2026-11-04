@@ -36,7 +36,7 @@ class Network:
             # drawn once and kept in the config: the network can be rebuilt identically
             self.config["seed"] = int(np.random.SeedSequence().entropy % 2**32)
         self.seed, self.labels = self.config["seed"], self.config["labels"]
-        self.dtype = np.dtype(self.config["dtype"])
+        self.dtype, self.loss = np.dtype(self.config["dtype"]), losses.loss(self.config["loss"])
         rng = np.random.default_rng(self.seed)
         sizes = [self.config["input_size"]] + [spec["size"] for spec in self.config["layers"]]
         self.layers = [Dense(n_in, n_out, spec, rng, self.dtype)
@@ -113,15 +113,11 @@ class Network:
         return onehot
 
     def _loss(self, out, y):
-        return losses.value(self.config["loss"], out, y, self.layers[-1].z)
+        return self.loss.value(out, y, self.layers[-1].z)
 
     def _backward(self, out, y):
-        last, n = self.layers[-1], len(self.layers)
-        if self.config["loss"] == "cross_entropy":
-            # softmax + cross-entropy: gradient on the logits = (p - y) / N
-            grad = last.backward_from_z((out - y) / len(y), input_grad=n > 1)
-        else:
-            grad = last.backward(losses.mse_grad(out, y), input_grad=n > 1)
+        n = len(self.layers)
+        grad = self.loss.backward(self.layers[-1], out, y, input_grad=n > 1)
         for i in range(n - 2, -1, -1):
             grad = self.layers[i].backward(grad, input_grad=i > 0)
 
