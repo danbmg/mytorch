@@ -13,6 +13,7 @@ from .layers import Dense
 from .optimizers import Optimizer
 from .schedules import Schedule
 from .training import batch
+from .training.early_stopping import EarlyStopping
 
 PREDICT_BATCH = 8192  # rows per chunk when predicting (bounds memory, not results)
 
@@ -161,7 +162,7 @@ class Network:
 
         history = {key: [] for key in ("epoch", "train_loss", "train_acc", "val_loss", "val_acc", "lr", "time")}
         first = self.meta["epochs_trained"]
-        best_loss, best_weights, best_epoch, wait, last_loss, stopped = math.inf, None, None, 0, None, False
+        stopping, last_loss, stopped = EarlyStopping(self, es), None, False
         progress = verbose and getattr(log, "isatty", lambda: False)()
         n_batches, steps, t_fit = math.ceil(n / bs), 0, time.perf_counter()
         # a diverging training overflows: reported below as a TrainingError, not as numpy warnings
@@ -199,28 +200,19 @@ class Network:
                 if callback:
                     callback(epoch, history)
                 last_loss = val["loss"] if has_val else train["loss"]
-                if has_val:
-                    if val["loss"] < best_loss - (es["min_delta"] if es else 0.0):
-                        best_loss, best_epoch, wait = val["loss"], epoch, 0
-                        if es and es["restore_best"]:
-                            best_weights = self.get_weights()
-                    else:
-                        wait += 1
-                    if es and wait >= es["patience"]:
-                        stopped = True
-                        break
+                if has_val and stopping.update(epoch, val["loss"]):
+                    stopped = True
+                    break
 
         if stopped and verbose:
-            print(f"early stopping: no val_loss improvement for {es['patience']} epochs", file=log)
+            print(f"early stopping: no val_loss improvement for {stopping.patience} epochs", file=log)
         # keep the weights of the best validation epoch, not those of the last one
-        if best_weights is not None and best_epoch != history["epoch"][-1]:
-            self.set_weights(best_weights)
-            if verbose:
-                print(f"weights of epoch {best_epoch} restored (val_loss {best_loss:.4f})", file=log)
+        if stopping.restore(history["epoch"][-1]) and verbose:
+            print(f"weights of epoch {stopping.best_epoch} restored (val_loss {stopping.best_loss:.4f})", file=log)
         self.meta.update(epochs_trained=first + len(history["epoch"]), train_samples=n, stopped_early=stopped,
                          train_time=self.meta["train_time"] + time.perf_counter() - t_fit)
-        if best_epoch is not None:
-            self.meta.update(best_epoch=best_epoch, best_val_loss=best_loss)
+        if stopping.best_epoch is not None:
+            self.meta.update(best_epoch=stopping.best_epoch, best_val_loss=stopping.best_loss)
         for key, values in history.items():
             self.history.setdefault(key, []).extend(values)
         return history
