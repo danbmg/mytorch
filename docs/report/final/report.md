@@ -1,7 +1,7 @@
-# Training report: final
+# Training report: large
 
-- `my_torch_network_final.nn`: 512 relu > 256 relu > 5 softmax, 528901 parameters, config `configs/final.conf`
-- 41 epochs in 915s on 572446 boards, best epoch 36 (val_loss 0.2525), early stopping
+- `my_torch_network_final.nn`: 1024 relu > 512 relu > 5 softmax, 1319941 parameters, config `configs/large.conf`
+- 59 epochs in 12820s on 1144892 boards, best epoch 53 (val_loss 0.1641), early stopping
 
 ![learning curves](curves.png)
 
@@ -9,21 +9,21 @@
 
 ```
                  precision  recall      f1  support
-Nothing             0.9566  0.9424  0.9494    29757
-Check White         0.8603  0.8872  0.8735    13418
-Check Black         0.8561  0.8625  0.8593    11396
-Checkmate White     0.8795  0.8637  0.8715     9276
-Checkmate Black     0.8605  0.8720  0.8662     7710
-accuracy                            0.9015    71557
-macro f1                            0.8840
+Nothing             0.9839  0.9673  0.9755    29757
+Check White         0.9082  0.9185  0.9133    13418
+Check Black         0.9124  0.9204  0.9164    11396
+Checkmate White     0.9010  0.9125  0.9067     9276
+Checkmate Black     0.9025  0.9180  0.9102     7710
+accuracy                            0.9382    71557
+macro f1                            0.9244
 
 confusion matrix (rows: true class, columns: predicted)
                          0        1        2        3        4
-Nothing              28042      754      726      109      126
-Check White            524    11905        0      989        0
-Check Black            603        0     9829        0      964
-Checkmate White         84     1180        0     8012        0
-Checkmate Black         61        0      926        0     6723
+Nothing              28783      459      395       65       55
+Check White            229    12324        0      865        0
+Check Black            197        0    10489        0      710
+Checkmate White         25      787        0     8464        0
+Checkmate Black         20        0      612        0     7078
 ```
 
 ![confusion matrix](confusion.png)
@@ -32,6 +32,6 @@ Checkmate Black         61        0      926        0     6723
 
 | subset | boards | accuracy | macro F1 | recall Nothing | recall Check White | recall Check Black | recall Checkmate White | recall Checkmate Black |
 |---|---|---|---|---|---|---|---|---|
-| 10_pieces | 21306 | 0.9229 | 0.9116 | 0.9510 | 0.8970 | 0.8758 | 0.9137 | 0.9305 |
-| 20_pieces | 29999 | 0.8843 | 0.8741 | 0.9238 | 0.8694 | 0.8411 | 0.8741 | 0.8722 |
-| many_pieces | 20252 | 0.9046 | 0.8539 | 0.9526 | 0.9000 | 0.8805 | 0.7682 | 0.7714 |
+| 10_pieces | 21306 | 0.9564 | 0.9477 | 0.9719 | 0.9406 | 0.9383 | 0.9478 | 0.9530 |
+| 20_pieces | 29999 | 0.9278 | 0.9195 | 0.9577 | 0.9021 | 0.8991 | 0.9245 | 0.9253 |
+| many_pieces | 20252 | 0.9346 | 0.8943 | 0.9723 | 0.9188 | 0.9327 | 0.8299 | 0.8290 |

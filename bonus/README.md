@@ -18,7 +18,7 @@ Avec N = 30 000 : 105 000 positions gardées sur **12,8 millions tirées** (1 po
 
 ## 3. Le réseau à 6 classes (`bonus/stalemate.conf`, rapport : `bonus/report/report.md`)
 
-Même architecture que le réseau final, 6 sorties, 50 epochs (19 min). Sur le test (82 057 positions, dont 3 000 pats jamais vus) :
+Même architecture que le premier réseau final (512 > 256), 6 sorties, 50 epochs (19 min). Sur le test (82 057 positions, dont 3 000 pats jamais vus) :
 
 | | Précision | Rappel | F1 |
 |---|---|---|---|
@@ -27,7 +27,7 @@ Même architecture que le réseau final, 6 sorties, 50 epochs (19 min). Sur le t
 
 - 85 % des pats sont reconnus. Les ratés partent presque tous en `Nothing` (378 sur 445) : le réseau voit que le roi n'est pas attaqué, pas qu'il n'a plus de case de fuite.
 - Les « presque pat » font leur travail : seules 18 des 29 757 positions `Nothing` du dataset d'origine sont prises pour des pats.
-- Ajouter la classe ne coûte rien aux 5 autres : 93,3 / 89,4 / 90,7 % sur 10 / 20 / beaucoup de pièces, contre 92,3 / 88,4 / 90,5 % pour le réseau final.
+- Ajouter la classe ne coûte rien aux 5 autres : 93,3 / 89,4 / 90,7 % sur 10 / 20 / beaucoup de pièces, contre 92,3 / 88,4 / 90,5 % pour le premier réseau final.
 - Limite : ce sont des pats de fin de partie à peu de pièces. Un pat de milieu de partie, avec beaucoup de pièces bloquées, ne leur ressemble pas.
 
 ```bash
