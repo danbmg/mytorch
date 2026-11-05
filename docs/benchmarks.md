@@ -88,9 +88,9 @@ De 25k à 572k positions, la validation passe de 61 % à 87 % et l'écart train/
 
 Un processus par entraînement, données en mémoire partagée (jamais copiées). Le gain plafonne dès 4 processus, et ce n'est pas le démarrage des processus : 8 entraînements simultanés débordent les 12 Mo de cache L3 partagés et se disputent la bande passante mémoire (8 threads BLAS sont aussi plus lents que 4). Sur le laptop Core 5 120U, le plafond était de 3,2× (limite : 15 W). À l'usage, `--predict` traite 54 000 positions par seconde.
 
-## 8. Réseau final
+## 8. Premier réseau final (512 > 256)
 
-`configs/final.conf` = architecture `deep` + schedule plateau, 50 epochs max. Arrêt anticipé à l'epoch 41, poids de l'epoch 36 restaurés. Rapport complet : `docs/report/final/report.md`.
+`configs/final.conf` = architecture `deep` + schedule plateau, 50 epochs max. Arrêt anticipé à l'epoch 41, poids de l'epoch 36 restaurés. Rapport complet : `docs/report/final_512_256/report.md`.
 
 | Test (71 557 positions) | `basic` | **`final`** |
 |---|---|---|
@@ -98,6 +98,41 @@ Un processus par entraînement, données en mémoire partagée (jamais copiées)
 | accuracy 10 / 20 / beaucoup de pièces | 89,8 / 86,4 / 88,4 % | 92,3 / 88,4 / 90,5 % |
 | rappel des mats, beaucoup de pièces | 78,0 / 75,1 % | 76,8 / 77,1 % |
 
-![matrice de confusion](report/final/confusion.png)
+![matrice de confusion](report/final_512_256/confusion.png)
 
 Il n'y a jamais de confusion de couleur. Les erreurs restantes sont **échec ↔ mat** (≈ 4 000), puis **échec ↔ rien**. Le point faible : les mats dans les positions chargées, les plus rares du dataset.
+
+## 9. Inversion des couleurs et réseau livré
+
+Les règles sont symétriques : une position et son miroir (plateau retourné verticalement, majuscules et minuscules échangées, trait et roques échangés, White et Black échangés dans le label) ont le même statut. `scripts/train.py --flip-colors` ajoute le miroir de chaque plateau au train, jamais à la validation ni au test (`analyzer/augment.py`). Le générateur de coups du bonus confirme le label miroir sur 2 008 positions sur 2 008.
+
+| Réseau | Plateaux de train | Epochs (meilleur) | val_loss | Test | F1 macro 5 / 3 classes |
+|---|---|---|---|---|---|
+| 512 > 256, sans miroirs (§8) | 572 446 | 41 (36) | 0,2525 | 90,15 % | 0,884 / 0,895 |
+| 512 > 256, miroirs | 1 144 892 | 71 (66) | 0,1726 | 93,52 % | 0,922 / 0,930 |
+| **1024 > 512, miroirs (livré)** | 1 144 892 | 59 (53) | **0,1641** | **93,82 %** | **0,924 / 0,933** |
+
+L'accuracy est la même en 5 et en 3 classes (couleur ignorée) : aucun de ces réseaux ne confond les couleurs. Le candidat est choisi sur la val_loss, le test ne sert qu'à la comparaison avec l'ancien réseau.
+
+```
+Test en 3 classes     avant (512 > 256)        après (1024 > 512)
+(lignes : vraie)   Nothing  Check   Mat     Nothing  Check   Mat
+Nothing              28042   1480    235      28783    854    120
+Check                 1127  21734   1953        426  22813   1575
+Checkmate              145   2106  14735         45   1399  15542
+```
+
+- **Les miroirs font l'essentiel** : +3,37 points à architecture égale. L'ancien réseau s'était arrêté à l'epoch 41 sur 50 : le plafond d'epochs ne le limitait pas.
+- **La capacité apporte peu** : +0,30 point (IC 95 % ±0,15) pour 2,5× plus de paramètres, un fichier de 5,3 Mo contre 2,1 Mo et un `--predict` de 4,5 s contre 2,5 s sur tout le test.
+- **Gain mesuré sur les mêmes plateaux** : 3 976 erreurs corrigées, 1 349 nouvelles, soit +3,67 points (IC 95 % ±0,20).
+- **Pas de fuite par les miroirs** : 365 plateaux du test (0,51 %) sont le miroir d'un plateau du train. Sans eux : 93,80 % contre 90,13 %, le même écart.
+- **Sur-apprentissage** : en fin d'entraînement, 98,6 % sur le train contre 93,9 % en validation. L'écart reste la limite principale.
+- **Erreurs restantes** : échec ↔ mat (≈ 3 000, contre ≈ 4 000). Sur 10 / 20 / beaucoup de pièces : 95,6 / 92,8 / 93,5 % (contre 92,3 / 88,4 / 90,5 %). Rappel des mats dans les positions chargées : 83,0 / 82,9 % (contre 76,8 / 77,1 %).
+
+```bash
+python3 scripts/train.py configs/final.conf --data data/chess.npz --out final_flip.nn --epochs 80 --flip-colors
+python3 scripts/train.py configs/large.conf --data data/chess.npz --out my_torch_network_final.nn --report docs/report/final --flip-colors
+python3 scripts/evaluate.py my_torch_network_final.nn final_flip.nn --data data/chess.npz
+```
+
+Rapport complet : `docs/report/final/report.md`.

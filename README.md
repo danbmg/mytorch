@@ -6,9 +6,9 @@ Réseau de neurones **écrit de zéro** (Python + numpy, aucune bibliothèque de
 
 | Réseau | Architecture | Accuracy | F1 macro | Entraînement |
 |---|---|---|---|---|
-| **`my_torch_network_final.nn`** | 773 > 512 > 256 > 5 | **90,15 %** | **0,884** | 41 epochs, 15 min |
+| **`my_torch_network_final.nn`** | 773 > 1024 > 512 > 5 | **93,82 %** | **0,924** | 59 epochs, 3,6 h, train doublé par les miroirs de couleurs |
 | `my_torch_network_basic.nn` (référence) | 773 > 256 > 128 > 5 | 87,95 % | 0,863 | 30 epochs, 3,4 min |
-| `bonus/my_torch_network_stalemate.nn` | idem final, 6 classes | 90,48 % (pats : F1 0,869) | 0,887 | 50 epochs, 19 min |
+| `bonus/my_torch_network_stalemate.nn` | 773 > 512 > 256 > 6 | 90,48 % (pats : F1 0,869) | 0,887 | 50 epochs, 19 min |
 
 Comment on est arrivé au réseau final : `docs/benchmarks.md`. Pourquoi chaque choix : `docs/decisions.md`. Rapports d'entraînement : `docs/report/`.
 
@@ -17,7 +17,7 @@ Comment on est arrivé au réseau final : `docs/benchmarks.md`. Pourquoi chaque 
 Python ≥ 3.10 et numpy (matplotlib pour les scripts). Sur Ubuntu : `sudo apt install python3-numpy python3-matplotlib python3-pytest`.
 
 ```bash
-make && make tests_run                                                  # my_torch_analyzer, my_torch_generator, 38 tests
+make && make tests_run                                                  # my_torch_analyzer, my_torch_generator, 45 tests
 ./my_torch_analyzer --predict my_torch_network_final.nn boards.txt       # une prédiction par ligne, rien d'autre sur stdout
 ./my_torch_analyzer --train --save new.nn my_torch_network_final.nn train.txt   # sans --save : écrase et garde un .bak
 ./my_torch_generator configs/basic.conf 3                               # basic_1.nn … basic_3.nn, réseaux vierges
@@ -54,7 +54,8 @@ Seuls `input_size` et `layers` sont obligatoires : le reste a une valeur par dé
 
 ```bash
 python3 scripts/dedup_split.py                  # dédup + split 80/10/10 stratifié -> data/{train,val,test}.txt, data/chess.npz
-python3 scripts/train.py configs/final.conf --data data/chess.npz --out my_torch_network_final.nn --report docs/report/final
+python3 scripts/train.py configs/large.conf --data data/chess.npz --out my_torch_network_final.nn --report docs/report/final --flip-colors
+python3 scripts/evaluate.py my_torch_network_final.nn --data data/chess.npz   # accuracy de test en 5 et en 3 classes
 sh scripts/run_experiments.sh                   # toutes les expériences de docs/benchmarks.md (~1h30 sur 8 cœurs)
 python3 bonus/gen_stalemate.py                  # bonus : voir bonus/README.md
 ```
