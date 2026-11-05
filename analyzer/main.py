@@ -8,15 +8,12 @@ Ctrl-C leaves no half-written network.
 import os
 import sys
 
-# one training at a time: 2 BLAS threads suits both our machines (docs/benchmarks.md); MY_TORCH_THREADS overrides
-os.environ.setdefault("MY_TORCH_THREADS", "2")
+from my_torch import TrainingError
 
-from my_torch import TrainingError  # noqa: E402
-
-from .args import UsageError, parse_args  # noqa: E402
-from .errors import EXIT_FAILURE, log, message  # noqa: E402
-from .modes import predict, train  # noqa: E402
-from .usage import USAGE  # noqa: E402
+from .args import UsageError, parse_args
+from .errors import EXIT_FAILURE, log, message
+from .modes import predict, train
+from .usage import USAGE
 
 
 def main(argv=None):
@@ -26,7 +23,10 @@ def main(argv=None):
         return 0
     try:
         opts = parse_args(args)
-        (predict if opts.mode == "predict" else train)(opts)
+        if opts.mode == "predict":
+            predict(opts)
+        else:
+            train(opts)
         return 0
     except BrokenPipeError:
         # output piped into a command that stopped reading (| head): not an error

@@ -1,7 +1,7 @@
 """Train several networks at the same time, one process per training.
 
 The trainings of a hyperparameter search are independent: they run in separate
-processes ("spawn": fresh interpreters, same behaviour on every Python version)
+processes ("spawn": fresh interpreters, same behavior on every Python version)
 with no communication. The data is put once in shared memory, so every worker
 reads the same bytes instead of receiving its own copy (440 MB for the chess
 training set). Each worker uses `threads_per_worker` BLAS threads (default 1).
@@ -23,7 +23,8 @@ THREAD_VARS = ("OPENBLAS_NUM_THREADS", "OMP_NUM_THREADS", "MKL_NUM_THREADS")
 @contextlib.contextmanager
 def _shared(arrays):
     """The arrays copied once into shared memory -> {key: (block name, shape, dtype)}; freed at exit."""
-    blocks, specs = [], {}
+    blocks = []  # the shared memory blocks, freed at exit
+    specs = {}
     try:
         for key, array in arrays.items():
             array = np.ascontiguousarray(array)

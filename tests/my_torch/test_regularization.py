@@ -1,4 +1,4 @@
-"""Regularisation: early stopping, L2, inverted dropout, gradient clipping, subnormal flush (T2.1, T2.2)."""
+"""Regularization: early stopping, L2, inverted dropout, gradient clipping, subnormal flush (T2.1, T2.2)."""
 
 import unittest
 
@@ -9,7 +9,7 @@ from my_torch import Network
 from my_torch.training.batch import flush_subnormals
 
 
-class TestRegularisation(unittest.TestCase):
+class TestRegularization(unittest.TestCase):
     def test_early_stopping_stops_and_restores_the_best_weights(self):
         rng = np.random.default_rng(0)
         X, Y = rng.normal(size=(40, 2)), rng.integers(2, size=40)  # noise: validation stops improving fast

@@ -8,12 +8,11 @@ import sys
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, ROOT)
 
-import my_torch  # noqa: E402,F401  (before numpy: sets the BLAS threads)
+import numpy as np  # noqa: E402  (after sys.path: the repository's packages come first)
+
 from my_torch.hpo import set_path  # noqa: E402
 
-import numpy as np  # noqa: E402
-
-# graph style: series colours in a fixed order (colour-blind safe neighbours); train dashed, validation solid
+# graph style: series colors in a fixed order (color-blind safe neighbours); train dashed, validation solid
 COLORS = ["#2a78d6", "#eb6834", "#1baf7a", "#eda100", "#e87ba4", "#008300", "#6250d6", "#e34948"]
 
 
@@ -36,7 +35,8 @@ def load_dataset(path, train_samples=None, val_samples=None, seed=0, test=False)
             fail(f"{path}: no X_{part}")
         if n and n < len(arrays[f"X_{part}"]):
             idx = np.sort(rng.choice(len(arrays[f"X_{part}"]), size=n, replace=False))
-            arrays[f"X_{part}"], arrays[f"Y_{part}"] = arrays[f"X_{part}"][idx], arrays[f"Y_{part}"][idx]
+            arrays[f"X_{part}"] = arrays[f"X_{part}"][idx]
+            arrays[f"Y_{part}"] = arrays[f"Y_{part}"][idx]
     return arrays
 
 

@@ -1,16 +1,17 @@
-"""One optimisation step on a mini-batch, and what keeps it fast.
+"""One optimization step on a mini-batch, and what keeps it fast.
 
 The gradients of every layer are gathered in one list, so L2 (added to the
 gradient, not to the loss: same result, no extra pass) and gradient clipping
 (one scale for all the gradients: the direction of the step is kept) are a few
-lines each, and the optimiser sees plain arrays.
+lines each, and the optimizer sees plain arrays. It only uses the public
+methods of Network (forward, compute_loss, decide, backward).
 """
 
 import math
 
 import numpy as np
 
-FLUSH_EVERY = 100  # optimisation steps between two flush_subnormals()
+FLUSH_EVERY = 100  # optimization steps between two flush_subnormals()
 
 
 def flush_subnormals(arrays):
@@ -37,13 +38,14 @@ def clip(grads, max_norm):
             g *= max_norm / (norm + 1e-12)
 
 
-def train_batch(net, opt, params, xb, yb, cfg, rng):
-    """Forward with dropout, loss, backward, one optimiser step -> (summed loss, correct predictions)."""
-    out = net._forward(xb, training=True, rng=rng)
-    loss, correct = net._loss(out, yb) * len(xb), int((net._decide(out) == net._decide(yb)).sum())
-    net._backward(out, yb)
+def train_batch(net, optimizer, params, xb, yb, cfg, rng):
+    """Forward with dropout, loss, backward, one optimizer step -> (summed loss, correct predictions)."""
+    out = net.forward(xb, training=True, rng=rng)
+    loss = net.compute_loss(out, yb) * len(xb)
+    correct = int((net.decide(out) == net.decide(yb)).sum())
+    net.backward(out, yb)
     grads = gradients(net, cfg["l2"])
     if cfg["grad_clip"]:
         clip(grads, cfg["grad_clip"])
-    opt.step(params, grads)
+    optimizer.step(params, grads)
     return loss, correct

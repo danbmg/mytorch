@@ -21,6 +21,8 @@ DESCRIPTION
     CHESSFILE    File containing chessboards
 
     --predict writes one line per chessboard, in order, and nothing else on stdout:
-    Nothing, Check White, Check Black, Checkmate White or Checkmate Black (the colour
-    is the side giving the check). --train shows its progress on stderr and holds out
-    10% of CHESSFILE to validate after each epoch. Errors: stderr, exit status 84."""
+    Nothing, Check White, Check Black, Checkmate White or Checkmate Black (the color
+    is the side giving the check). Each answer is the network's answer averaged over
+    the 4 symmetric versions of the board (colors swapped, files mirrored). --train
+    shows its progress on stderr and holds out 10% of CHESSFILE to validate after
+    each epoch. Errors: stderr, exit status 84."""

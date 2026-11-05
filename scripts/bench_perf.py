@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Training speed benchmark (T2.3): what each optimisation is worth, on the same network and data.
+"""Training speed benchmark (T2.3): what each optimization is worth, on the same network and data.
 
 usage: python3 scripts/bench_perf.py --data DATA.npz [--config configs/basic.conf] [--out results/perf]
 
@@ -52,8 +52,12 @@ def main(argv):
     p.add_argument("--samples", type=int, default=100000)
     p.add_argument("--out", default="results/perf")
     args = p.parse_args(argv)
-    config, data = load_json(args.config), load_dataset(args.data, args.samples)
-    X, Y, cores, rows = data["X_train"], data["Y_train"], os.cpu_count() or 1, []
+    config = load_json(args.config)
+    data = load_dataset(args.data, args.samples)
+    X = data["X_train"]
+    Y = data["Y_train"]
+    cores = os.cpu_count() or 1
+    rows = []
     os.makedirs(args.out, exist_ok=True)
 
     def add(bench, setting, value, unit):
@@ -74,7 +78,9 @@ def main(argv):
         add("subnormal", label, float(np.mean(history["time"][-5:])), "s/epoch (last 5 of 30)")
     batch_module.FLUSH_EVERY = default
     configs = [dict(plain(config, epochs=3), seed=i) for i in range(2 * cores)]
-    base, workers_list, speedups = None, sorted({1, 2, 4, 8, cores} & set(range(1, cores + 1))), []
+    base = None  # wall time with 1 worker
+    workers_list = sorted({1, 2, 4, 8, cores} & set(range(1, cores + 1)))
+    speedups = []
     for workers in workers_list:
         t0 = time.perf_counter()
         train_many(configs, X, Y, workers=workers)

@@ -9,8 +9,8 @@ from my_torch import ConfigError, activations
 from my_torch.activations import ACTIVATIONS
 from my_torch.errors import lookup
 from my_torch.initializers import INITS
-from my_torch.optimizers import OPTIMIZERS, Optimizer
-from my_torch.schedules import SCHEDULES, Schedule
+from my_torch.optimizers import OPTIMIZERS, make_optimizer
+from my_torch.schedules import SCHEDULES, make_schedule
 
 
 class TestRegistries(unittest.TestCase):
@@ -20,9 +20,9 @@ class TestRegistries(unittest.TestCase):
             with self.subTest(name=name), self.assertRaisesRegex(ConfigError, re.escape(f"{where}: unknown '{name}' (choices: ")):
                 lookup(registry, name, where)
         with self.assertRaises(ConfigError):
-            Optimizer("adamw", 0.1)
+            make_optimizer("adamw", 0.1)
         with self.assertRaises(ConfigError):
-            Schedule({"name": "linear"}, 1.0, 10)
+            make_schedule({"name": "linear"}, 1.0, 10)
         with self.assertRaises(ConfigError):
             activations.forward("nope", np.zeros((1, 1)))
 
@@ -42,17 +42,17 @@ class TestRegistries(unittest.TestCase):
     def test_every_optimizer_moves_the_parameters_against_the_gradient(self):
         for name, cls in OPTIMIZERS.items():
             with self.subTest(optimizer=name):
-                opt = Optimizer(name, 0.1)
+                opt = make_optimizer(name, 0.1)
                 self.assertIsInstance(opt, cls)
                 p = np.ones(3)
                 opt.step([p], [np.ones(3)])
                 self.assertTrue((p < 1).all())
-                self.assertEqual(len(opt.state()), cls.MOMENTS)
+                self.assertEqual(len(opt.moments()), len(cls.STATE))
 
     def test_every_schedule_starts_at_lr0(self):
         for name, cls in SCHEDULES.items():
             with self.subTest(schedule=name):
-                schedule = Schedule({"name": name, **cls.DEFAULTS}, 0.5, 10)
+                schedule = make_schedule({"name": name, **cls.DEFAULTS}, 0.5, 10)
                 self.assertIsInstance(schedule, cls)
                 self.assertAlmostEqual(schedule.lr(0), 0.5)
 

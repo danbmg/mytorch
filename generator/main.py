@@ -10,8 +10,9 @@ import json
 import os
 import sys
 
-from analyzer.errors import EXIT_FAILURE
 from my_torch import ConfigError, Network, normalize_config
+
+EXIT_FAILURE = 84  # the status the subject requires for every error
 
 USAGE = """USAGE
     ./my_torch_generator config_file_1 nb_1 [config_file_2 nb_2...]
@@ -56,9 +57,11 @@ def parse_jobs(args):
 
 def write_networks(path, config, count):
     """<name>_1.nn ... <name>_<count>.nn in the current directory, name = the config file without extension."""
-    name, seed = os.path.splitext(os.path.basename(path))[0], config.get("seed")
+    name = os.path.splitext(os.path.basename(path))[0]
+    seed = config.get("seed")
     for i in range(1, count + 1):
-        Network(config, seed=None if seed is None else seed + i - 1).save(f"{name}_{i}.nn")
+        network_seed = None if seed is None else seed + i - 1
+        Network(config, seed=network_seed).save(f"{name}_{i}.nn")
 
 
 def main(argv=None):

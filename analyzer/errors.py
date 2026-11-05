@@ -1,9 +1,8 @@
 """Exit status and error messages of the command line programs.
 
 Every failure is reported on stderr as "program: message" with the exit
-status 84 the subject requires, never as a traceback. This is the one place
-that defines the status and turns an exception into its message; generator
-and the scripts import these two things from here and nothing else.
+status 84 the subject requires, never as a traceback: this module defines the
+status and turns an exception into its message.
 """
 
 import sys

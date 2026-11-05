@@ -1,0 +1,131 @@
+network,epoch,boards_seen_millions,val_acc,val_loss
+2 versions (colors),1,1.145,0.80501,0.45156
+2 versions (colors),2,2.29,0.84787,0.36849
+2 versions (colors),3,3.435,0.86179,0.33388
+2 versions (colors),4,4.58,0.87754,0.30381
+2 versions (colors),5,5.724,0.87935,0.29887
+2 versions (colors),6,6.869,0.88743,0.28172
+2 versions (colors),7,8.014,0.89178,0.27643
+2 versions (colors),8,9.159,0.89288,0.27008
+2 versions (colors),9,10.304,0.89512,0.26515
+2 versions (colors),10,11.449,0.89763,0.25691
+2 versions (colors),11,12.594,0.90074,0.25059
+2 versions (colors),12,13.739,0.90155,0.25003
+2 versions (colors),13,14.884,0.90268,0.24727
+2 versions (colors),14,16.028,0.90498,0.24432
+2 versions (colors),15,17.173,0.90581,0.24377
+2 versions (colors),16,18.318,0.90299,0.24537
+2 versions (colors),17,19.463,0.90631,0.24001
+2 versions (colors),18,20.608,0.90767,0.23825
+2 versions (colors),19,21.753,0.90814,0.23769
+2 versions (colors),20,22.898,0.90855,0.23573
+2 versions (colors),21,24.043,0.90792,0.23705
+2 versions (colors),22,25.188,0.91006,0.23391
+2 versions (colors),23,26.333,0.90926,0.23441
+2 versions (colors),24,27.477,0.91176,0.23091
+2 versions (colors),25,28.622,0.90937,0.23406
+2 versions (colors),26,29.767,0.91049,0.23587
+2 versions (colors),27,30.912,0.92413,0.19682
+2 versions (colors),28,32.057,0.92525,0.19536
+2 versions (colors),29,33.202,0.92699,0.19312
+2 versions (colors),30,34.347,0.92691,0.19187
+2 versions (colors),31,35.492,0.92838,0.1905
+2 versions (colors),32,36.637,0.92652,0.19327
+2 versions (colors),33,37.781,0.92651,0.19194
+2 versions (colors),34,38.926,0.93247,0.17778
+2 versions (colors),35,40.071,0.9333,0.17685
+2 versions (colors),36,41.216,0.93428,0.17438
+2 versions (colors),37,42.361,0.9344,0.17377
+2 versions (colors),38,43.506,0.93421,0.17433
+2 versions (colors),39,44.651,0.93429,0.1749
+2 versions (colors),40,45.796,0.9369,0.16856
+2 versions (colors),41,46.941,0.93721,0.16762
+2 versions (colors),42,48.085,0.9368,0.16777
+2 versions (colors),43,49.23,0.93708,0.16773
+2 versions (colors),44,50.375,0.93813,0.16553
+2 versions (colors),45,51.52,0.93834,0.1654
+2 versions (colors),46,52.665,0.93855,0.16486
+2 versions (colors),47,53.81,0.93889,0.16549
+2 versions (colors),48,54.955,0.93894,0.16481
+2 versions (colors),49,56.1,0.93926,0.16429
+2 versions (colors),50,57.245,0.93841,0.16483
+2 versions (colors),51,58.389,0.93806,0.16474
+2 versions (colors),52,59.534,0.93868,0.16461
+2 versions (colors),53,60.679,0.93914,0.16408
+2 versions (colors),54,61.824,0.93882,0.1647
+2 versions (colors),55,62.969,0.93854,0.1653
+2 versions (colors),56,64.114,0.93876,0.16479
+2 versions (colors),57,65.259,0.93869,0.16516
+2 versions (colors),58,66.404,0.93872,0.16537
+2 versions (colors),59,67.549,0.93875,0.16489
+"4 versions (colors, files)",1,2.29,0.836,0.39863
+"4 versions (colors, files)",2,4.58,0.86603,0.33266
+"4 versions (colors, files)",3,6.869,0.88205,0.29831
+"4 versions (colors, files)",4,9.159,0.88696,0.28518
+"4 versions (colors, files)",5,11.449,0.89593,0.27407
+"4 versions (colors, files)",6,13.739,0.89794,0.26068
+"4 versions (colors, files)",7,16.028,0.9031,0.25165
+"4 versions (colors, files)",8,18.318,0.90054,0.25437
+"4 versions (colors, files)",9,20.608,0.90497,0.24637
+"4 versions (colors, files)",10,22.898,0.90751,0.2423
+"4 versions (colors, files)",11,25.188,0.90691,0.24133
+"4 versions (colors, files)",12,27.477,0.90954,0.23994
+"4 versions (colors, files)",13,29.767,0.91045,0.23604
+"4 versions (colors, files)",14,32.057,0.91067,0.23878
+"4 versions (colors, files)",15,34.347,0.90946,0.23541
+"4 versions (colors, files)",16,36.637,0.91091,0.23753
+"4 versions (colors, files)",17,38.926,0.91112,0.23268
+"4 versions (colors, files)",18,41.216,0.91228,0.2332
+"4 versions (colors, files)",19,43.506,0.91185,0.23353
+"4 versions (colors, files)",20,45.796,0.92962,0.19113
+"4 versions (colors, files)",21,48.085,0.92985,0.18835
+"4 versions (colors, files)",22,50.375,0.9306,0.18694
+"4 versions (colors, files)",23,52.665,0.93043,0.18838
+"4 versions (colors, files)",24,54.955,0.93152,0.18869
+"4 versions (colors, files)",25,57.245,0.94021,0.16603
+"4 versions (colors, files)",26,59.534,0.94019,0.16551
+"4 versions (colors, files)",27,61.824,0.94149,0.1621
+"4 versions (colors, files)",28,64.114,0.94149,0.16348
+"4 versions (colors, files)",29,66.404,0.94119,0.16366
+"4 versions (colors, files)",30,68.694,0.94438,0.1554
+"4 versions (colors, files)",31,70.983,0.94488,0.15271
+"4 versions (colors, files)",32,73.273,0.94512,0.15185
+"4 versions (colors, files)",33,75.563,0.94617,0.15041
+"4 versions (colors, files)",34,77.853,0.94544,0.15212
+"4 versions (colors, files)",35,80.142,0.94592,0.15131
+"4 versions (colors, files)",36,82.432,0.94722,0.14769
+"4 versions (colors, files)",37,84.722,0.9475,0.14712
+"4 versions (colors, files)",38,87.012,0.94755,0.14596
+"4 versions (colors, files)",39,89.302,0.94769,0.14555
+"4 versions (colors, files)",40,91.591,0.94689,0.14696
+"4 versions (colors, files)",41,93.881,0.9475,0.14556
+"4 versions (colors, files)",42,96.171,0.9478,0.14446
+"4 versions (colors, files)",43,98.461,0.94849,0.14319
+"4 versions (colors, files)",44,100.75,0.94866,0.14363
+"4 versions (colors, files)",45,103.04,0.94861,0.14319
+"4 versions (colors, files)",46,105.33,0.94819,0.14313
+"4 versions (colors, files)",47,107.62,0.94875,0.14271
+"4 versions (colors, files)",48,109.91,0.94884,0.14299
+"4 versions (colors, files)",49,112.199,0.94853,0.14287
+"4 versions (colors, files)",50,114.489,0.94892,0.14255
+"4 versions (colors, files)",51,116.779,0.94899,0.1427
+"4 versions (colors, files)",52,119.069,0.94889,0.14235
+"4 versions (colors, files)",53,121.359,0.94877,0.14229
+"4 versions (colors, files)",54,123.648,0.94892,0.14217
+"4 versions (colors, files)",55,125.938,0.94871,0.14233
+"4 versions (colors, files)",56,128.228,0.94878,0.14208
+"4 versions (colors, files)",57,130.518,0.94845,0.1425
+"4 versions (colors, files)",58,132.807,0.94881,0.14165
+"4 versions (colors, files)",59,135.097,0.94826,0.14248
+"4 versions (colors, files)",60,137.387,0.94887,0.14203
+"4 versions (colors, files)",61,139.677,0.949,0.14168
+"4 versions (colors, files)",62,141.967,0.94888,0.14152
+"4 versions (colors, files)",63,144.256,0.94882,0.14197
+"4 versions (colors, files)",64,146.546,0.94867,0.14233
+"4 versions (colors, files)",65,148.836,0.94895,0.14137
+"4 versions (colors, files)",66,151.126,0.94906,0.14146
+"4 versions (colors, files)",67,153.416,0.94923,0.14152
+"4 versions (colors, files)",68,155.705,0.94905,0.14157
+"4 versions (colors, files)",69,157.995,0.94891,0.14158
+"4 versions (colors, files)",70,160.285,0.94902,0.1415
+"4 versions (colors, files)",71,162.575,0.94902,0.14144

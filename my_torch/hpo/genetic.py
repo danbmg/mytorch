@@ -54,13 +54,17 @@ def genetic_search(space, base, evaluate, rng, population=10, generations=5, eli
     if not 0 <= elite < population:
         raise SpaceError("elite must be in [0, population)")
     pop = [{k: sample(spec, rng) for k, spec in space.items()} for _ in range(population)]
-    cache, results = {}, []
+    cache = {}  # genes key -> result: an individual is never trained twice
+    results = []
     for generation in range(generations):
         todo = list({key(g): g for g in pop if key(g) not in cache}.values())
         for result in evaluate_genes(base, todo, evaluate, {"method": "genetic", "generation": generation}):
             cache[key(result["genes"])] = result
             results.append(result)
-        fitness = lambda genes: score(cache[key(genes)], objective)  # noqa: E731
+
+        def fitness(genes):
+            return score(cache[key(genes)], objective)
+
         ranked = sorted(pop, key=fitness)
         if on_generation:
             on_generation(generation, [cache[key(g)] for g in ranked])

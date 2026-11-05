@@ -9,7 +9,7 @@ from ..config import normalize_config
 from .genes import apply_genes
 from .space import check_space, grid, sample
 
-OBJECTIVES = {"val_loss": 1, "val_acc": -1, "val_macro_f1": -1}  # 1: minimise, -1: maximise
+OBJECTIVES = {"val_loss": 1, "val_acc": -1, "val_macro_f1": -1}  # 1: minimize, -1: maximize
 
 
 def score(result, objective="val_loss"):

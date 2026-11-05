@@ -8,7 +8,7 @@ import numpy as np
 
 from helpers import XOR_X, XOR_Y, xor_config
 from my_torch import Network, TrainingError, normalize_config
-from my_torch.schedules import Schedule
+from my_torch.schedules import make_schedule
 
 
 class TestTraining(unittest.TestCase):
@@ -46,11 +46,16 @@ class TestTraining(unittest.TestCase):
         self.assertIn("val_acc", log.getvalue())
 
     def test_schedules(self):
-        lr = lambda spec, epoch: Schedule(normalize_config(xor_config(lr_schedule=spec))["lr_schedule"], 1.0, 10).lr(epoch)  # noqa: E731
+        def schedule(spec):
+            return make_schedule(normalize_config(xor_config(lr_schedule=spec))["lr_schedule"], 1.0, 10)
+
+        def lr(spec, epoch):
+            return schedule(spec).lr(epoch)
+
         self.assertEqual(lr({"name": "step", "step_size": 3, "gamma": 0.5}, 7), 0.25)
         self.assertAlmostEqual(lr({"name": "exponential", "gamma": 0.9}, 2), 0.81)
         self.assertAlmostEqual(lr({"name": "cosine"}, 5), 0.5)
-        plateau = Schedule(normalize_config(xor_config(lr_schedule="plateau"))["lr_schedule"], 1.0, 10)
+        plateau = schedule("plateau")
         self.assertEqual([plateau.lr(e, loss) for e, loss in enumerate([None, 1.0, 1.0, 1.0])], [1.0, 1.0, 1.0, 0.5])
 
 

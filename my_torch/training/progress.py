@@ -9,7 +9,8 @@ never touches stdout, so the predictions of the analyzer stay clean.
 
 class Progress:
     def __init__(self, log, enabled):
-        self.log, self.enabled = log, enabled
+        self.log = log
+        self.enabled = enabled
         self.tty = enabled and getattr(log, "isatty", lambda: False)()
 
     def message(self, text):
@@ -28,4 +29,7 @@ class Progress:
         line = f"epoch {epoch:>3}/{last_epoch}  loss {train['loss']:.4f}  acc {100 * train['accuracy']:6.2f}%"
         if val["loss"] is not None:
             line += f"  val_loss {val['loss']:.4f}  val_acc {100 * val['accuracy']:6.2f}%"
-        print(("\r\033[K" if self.tty else "") + line + f"  lr {lr:.2e}  {seconds:.1f}s", file=self.log, flush=True)
+        line += f"  lr {lr:.2e}  {seconds:.1f}s"
+        if self.tty:
+            line = "\r\033[K" + line  # over the percentage of batch()
+        print(line, file=self.log, flush=True)

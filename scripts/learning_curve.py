@@ -10,13 +10,11 @@ import argparse
 import os
 import sys
 
-os.environ.setdefault("MY_TORCH_THREADS", "4")  # trainings one after the other: 4 BLAS threads each
+from common import COLORS, ROOT, figure, load_dataset, load_json, log_count_axis, save_figure, write_csv
 
-from common import COLORS, ROOT, figure, load_dataset, load_json, log_count_axis, save_figure, write_csv  # noqa: E402
+from my_torch import Network
 
-from my_torch import Network  # noqa: E402
-
-import numpy as np  # noqa: E402
+import numpy as np
 
 
 def main(argv):
@@ -27,10 +25,12 @@ def main(argv):
     p.add_argument("--epochs", type=int, default=20)
     p.add_argument("--out", default="results/learning_curve.png")
     args = p.parse_args(argv)
-    config, data = load_json(args.config), load_dataset(args.data, val_samples=30000)
+    config = load_json(args.config)
+    data = load_dataset(args.data, val_samples=30000)
     config["training"] = {**config.get("training", {}), "early_stopping": None}
     total = len(data["X_train"])
-    order, rows = np.random.default_rng(0).permutation(total), []
+    order = np.random.default_rng(0).permutation(total)
+    rows = []
     for size in sorted(s if 0 < s < total else total for s in args.sizes):
         idx = np.sort(order[:size])
         h = Network(config).fit(data["X_train"][idx], data["Y_train"][idx], data["X_val"], data["Y_val"], epochs=args.epochs)

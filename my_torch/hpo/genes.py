@@ -40,7 +40,8 @@ def set_path(config, path, value):
 def _hidden_layers(config, hidden):
     """The hidden layers rebuilt from the hidden.* genes; missing genes come from the first layer."""
     first = config["layers"][0] if len(config["layers"]) > 1 else {}
-    size, layers = hidden.get("size", first.get("size", 128)), []
+    size = hidden.get("size", first.get("size", 128))
+    layers = []
     for _ in range(int(hidden.get("layers", len(config["layers"]) - 1))):
         layers.append({"size": max(int(round(size)), 1),
                        "activation": hidden.get("activation", first.get("activation", "relu")),
@@ -51,9 +52,12 @@ def _hidden_layers(config, hidden):
 
 def _apply_gene(config, key, value):
     section = key.split(".")[0]
-    if key in ("optimizer.name", "lr_schedule.name") and config.get(section, {}).get("name") != value:
+    current = config.get(section, {})
+    if key in ("optimizer.name", "lr_schedule.name") and current.get("name") != value:
         # another optimizer / schedule: the settings of the old one do not apply, the lr does
-        config[section] = {"name": value, **({"lr": config[section]["lr"]} if "lr" in config.get(section, {}) else {})}
+        config[section] = {"name": value}
+        if "lr" in current:
+            config[section]["lr"] = current["lr"]
     elif not key.startswith("hidden."):
         set_path(config, key, value)
 

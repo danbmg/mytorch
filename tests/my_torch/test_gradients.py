@@ -18,8 +18,11 @@ class TestGradients(unittest.TestCase):
                                                    {"size": n_out, "activation": output}],
                        "loss": loss, "dtype": "float64", "seed": 7})
         Y = targets(net, Y, len(X))
-        total = lambda: net._loss(net._forward(X), Y) + 0.5 * l2 * sum((layer.W ** 2).sum() for layer in net.layers)  # noqa: E731
-        net._backward(net._forward(X), Y)
+        def total():
+            l2_term = 0.5 * l2 * sum((layer.W ** 2).sum() for layer in net.layers)
+            return net.compute_loss(net.forward(X), Y) + l2_term
+
+        net.backward(net.forward(X), Y)
         analytic = [(layer.dW + l2 * layer.W, layer.db) for layer in net.layers]
         for layer, (dW, db) in zip(net.layers, analytic):
             self.assertLess(rel_error(dW, numeric_grad(total, layer.W)), 1e-5)

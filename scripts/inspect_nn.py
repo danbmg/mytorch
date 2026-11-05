@@ -16,6 +16,9 @@ import numpy as np  # noqa: E402
 
 
 def main(argv):
+    if "-h" in argv or "--help" in argv:
+        print(__doc__.strip())
+        return 0
     paths = [a for a in argv if a != "--json"]
     if len(paths) != 1 or [a for a in argv if a.startswith("-") and a != "--json"]:
         print(__doc__.strip(), file=sys.stderr)
@@ -29,7 +32,8 @@ def main(argv):
     if "--json" in argv:
         print(json.dumps(header, indent=2))
         return 0
-    cfg, meta = header["config"], header.get("meta") or {}
+    cfg = header["config"]
+    meta = header.get("meta") or {}
     print(f"file          {path} ({os.path.getsize(path) / 1024:.1f} KiB), format v{header['format_version']},"
           f" created {header.get('created', '?')}")
     print(f"name          {cfg.get('name', '')}  {cfg.get('description', '')}")

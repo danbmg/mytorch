@@ -13,7 +13,8 @@ import tempfile
 
 import numpy as np
 
-FORMAT, FORMAT_VERSION = "my_torch.nn", 1
+FORMAT = "my_torch.nn"  # written in every header: a file without it is not a network
+FORMAT_VERSION = 1  # +1 at every change of the layout, so that old files can be converted (reader.upgrade)
 
 
 def header(net):
@@ -22,17 +23,23 @@ def header(net):
         "format": FORMAT, "format_version": FORMAT_VERSION,
         "created": datetime.datetime.now().astimezone().isoformat(timespec="seconds"),
         "config": net.config, "labels": net.labels, "meta": net.meta,
-        "layers": [{"name": f"W{i}/b{i}", "inputs": layer.W.shape[0], "outputs": layer.W.shape[1],
-                    "activation": layer.activation, "params": layer.n_params} for i, layer in enumerate(net.layers)],
+        "layers": [layer_summary(i, layer) for i, layer in enumerate(net.layers)],
         "history": net.history,
     }
+
+
+def layer_summary(i, layer):
+    """What the header says about layer i: its arrays, its size and its activation."""
+    return {"name": f"W{i}/b{i}", "inputs": layer.W.shape[0], "outputs": layer.W.shape[1],
+            "activation": layer.activation, "params": layer.n_params}
 
 
 def arrays(net):
     """The .npz members: the header as bytes, then W0, b0, W1, b1..."""
     out = {"header": np.frombuffer(json.dumps(header(net), indent=2).encode("utf-8"), dtype=np.uint8)}
     for i, layer in enumerate(net.layers):
-        out[f"W{i}"], out[f"b{i}"] = layer.W, layer.b
+        out[f"W{i}"] = layer.W
+        out[f"b{i}"] = layer.b
     return out
 
 

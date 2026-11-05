@@ -8,6 +8,7 @@ import unittest
 
 import numpy as np
 
+from analyzer.augment import symmetric_proba
 from analyzer.boards import read_boards
 from analyzer.labels import LABELS
 from analyzer.main import main
@@ -70,7 +71,10 @@ class TestCommandLine(unittest.TestCase):
     def test_predict_one_label_per_board_in_order(self):
         code, out, err = run_main(main, "--predict", "net.nn", "boards.txt")
         self.assertEqual((code, err), (0, ""))
-        self.assertEqual(out.splitlines(), [LABELS[i] for i in load_network("net.nn").predict(read_boards("boards.txt")[0])])
+        # the answer of the network averaged over the 4 symmetric versions of each board
+        X = read_boards("boards.txt")[0]
+        expected = symmetric_proba(load_network("net.nn"), X, LABELS).argmax(axis=1)
+        self.assertEqual(out.splitlines(), [LABELS[i] for i in expected])
         Network(self.config(labels=LABELS + ["Stalemate"])).save("six.nn")  # the labels come from the network
         self.assertTrue(set(run_main(main, "--predict", "six.nn", "boards.txt")[1].splitlines()) <= set(LABELS + ["Stalemate"]))
 

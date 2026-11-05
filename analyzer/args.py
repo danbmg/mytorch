@@ -21,9 +21,12 @@ def _value(opts, arg, args):
     if not args:
         raise UsageError(f"{arg} needs a value (see --help)")
     value = args.pop(0)
-    if arg == "--epochs" and not (value.isdigit() and int(value) > 0):
-        raise UsageError(f"--epochs: expected a positive integer, got '{value}'")
-    setattr(opts, arg[2:], int(value) if arg == "--epochs" else value)
+    if arg == "--epochs":
+        if not (value.isdigit() and int(value) > 0):
+            raise UsageError(f"--epochs: expected a positive integer, got '{value}'")
+        opts.epochs = int(value)
+    else:
+        opts.save = value
 
 
 def _check(opts, files):
@@ -38,7 +41,9 @@ def _check(opts, files):
 
 def parse_args(args):
     """Command line arguments -> namespace (mode, save, epochs, loadfile, chessfile)."""
-    opts, files, args = SimpleNamespace(mode=None, save=None, epochs=None), [], list(args)
+    opts = SimpleNamespace(mode=None, save=None, epochs=None)
+    files = []
+    args = list(args)
     while args:
         arg = args.pop(0)
         if arg in ("--predict", "--train"):

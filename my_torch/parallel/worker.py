@@ -50,7 +50,8 @@ def run(task):
     """(index, config, fit kwargs) -> result dict; a failed training gives an "error" key."""
     index, config, fit_kwargs = task
     t0 = time.perf_counter()
-    X_val, Y_val = _DATA.get("X_val"), _DATA.get("Y_val")
+    X_val = _DATA.get("X_val")
+    Y_val = _DATA.get("Y_val")
     try:
         net = Network(config)
         history = net.fit(_DATA["X"], _DATA["Y"], X_val, Y_val, **fit_kwargs)

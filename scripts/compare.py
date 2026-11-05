@@ -66,7 +66,8 @@ def main(argv):
         if r.get("error"):
             rows.append({"config": label, "error": r["error"]})
             continue
-        h, j = r["history"], r["history"]["epoch"].index(r["best_epoch"])
+        h = r["history"]
+        j = h["epoch"].index(r["best_epoch"])
         rows.append({"config": label, "layers": describe_layers(r["config"]), "best_epoch": r["best_epoch"],
                      "epochs": r["epochs"], "train_loss": round(h["train_loss"][j], 4), "val_loss": round(h["val_loss"][j], 4),
                      "train_acc": round(h["train_acc"][j], 4), "val_acc": round(h["val_acc"][j], 4),
@@ -81,7 +82,8 @@ def main(argv):
     fig, axes = figure(3 if show_lr else 2, width=5.2)
     for ax, name in zip(axes, ("loss", "acc")):
         for label, r, color in ok:
-            h, j = r["history"], r["history"]["epoch"].index(r["best_epoch"])
+            h = r["history"]
+            j = h["epoch"].index(r["best_epoch"])
             ax.plot(h["epoch"], h[f"train_{name}"], color=color, linestyle="--", alpha=0.8)
             ax.plot(h["epoch"], h[f"val_{name}"], color=color, label=label)
             ax.plot(h["epoch"][j], h[f"val_{name}"][j], "o", color=color, markersize=7)

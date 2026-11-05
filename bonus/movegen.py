@@ -37,7 +37,10 @@ CASTLES = (("K", 60, 62, 63, 61, (61, 62), (60, 61, 62)), ("Q", 60, 58, 56, 59, 
 
 class Board:
     def __init__(self, squares, white, castling="-", ep=None):
-        self.squares, self.white, self.castling, self.ep = squares, white, castling, ep
+        self.squares = squares  # 64 characters, '.' = empty
+        self.white = white  # True: White to move
+        self.castling = castling
+        self.ep = ep  # en passant target square, or None
 
     @classmethod
     def from_fen(cls, fen):
@@ -45,7 +48,9 @@ class Board:
         squares = ["."] * 64
         for sq, piece in pos.pieces:
             squares[sq] = piece
-        ep = None if pos.en_passant == "-" else 8 * (8 - int(pos.en_passant[1])) + "abcdefgh".index(pos.en_passant[0])
+        ep = None
+        if pos.en_passant != "-":
+            ep = 8 * (8 - int(pos.en_passant[1])) + "abcdefgh".index(pos.en_passant[0])
         return cls(squares, pos.side == "w", pos.castling, ep)
 
     def to_fen(self):
@@ -160,9 +165,10 @@ def legal_moves(board):
 
 
 def status(board):
-    """'Nothing', 'Check White', 'Checkmate Black', 'Stalemate'... (colour = the side giving check)."""
+    """'Nothing', 'Check White', 'Checkmate Black', 'Stalemate'... (color = the side giving check)."""
     board = Board.from_fen(board) if isinstance(board, str) else board
-    attacker, moves = "Black" if board.white else "White", next(legal_moves(board), None) is not None
+    attacker = "Black" if board.white else "White"
+    moves = next(legal_moves(board), None) is not None
     if in_check(board):
         return f"Check {attacker}" if moves else f"Checkmate {attacker}"
     return "Nothing" if moves else "Stalemate"

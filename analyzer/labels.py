@@ -1,4 +1,4 @@
-"""Output classes. The colour is the side that GIVES the check: 'Check White' = the white
+"""Output classes. The color is the side that GIVES the check: 'Check White' = the white
 pieces attack the black king. A network stores its own labels: the analyzer reads them
 from the .nn (the 6-class bonus network needs no specific code)."""
 

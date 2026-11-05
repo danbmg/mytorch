@@ -37,7 +37,10 @@ def main(argv):
     if not paths:
         fail(f"{args.dataset}: no <class>/<subset>.txt file")
     subsets = sorted({os.path.splitext(os.path.basename(path))[0] for path in paths})
-    lines, keys, y, source = [], [], [], []
+    lines = []
+    keys = []  # position of each line, without the move counters
+    y = []
+    source = []  # index of the file of each line
     for file_index, path in enumerate(paths):
         try:
             file_lines = read_lines(path)
@@ -55,7 +58,8 @@ def main(argv):
             lines.append(line.strip())
             keys.append(position_key(fen))
             source.append(file_index)
-    y, source = np.array(y), np.array(source)
+    y = np.array(y)
+    source = np.array(source)
     subset_of = np.array([subsets.index(os.path.splitext(os.path.basename(path))[0]) for path in paths])
     kept, duplicates, conflicts = deduplicate(keys, y)
     print(f"{len(lines)} lines, {duplicates} duplicates, {conflicts} conflicting positions -> {len(kept)} kept",

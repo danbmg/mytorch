@@ -1,6 +1,6 @@
 """Encoding of a position as network inputs: 773 values 0/1 (uint8)
 
-  0..767    12 planes of 64 squares, one per piece and colour (P N B R Q K p n b r q k);
+  0..767    12 planes of 64 squares, one per piece and color (P N B R Q K p n b r q k);
             square = 8 * row + column, row 0 = 8th rank (FEN order), column 0 = file a
   768       side to move (1 = white)
   769..772  castling rights K Q k q

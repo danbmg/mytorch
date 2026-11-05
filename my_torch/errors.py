@@ -1,6 +1,6 @@
 """The errors of the module, and the lookup in its registries.
 
-Every configurable choice (activation, initialisation, loss, optimizer, learning
+Every configurable choice (activation, initialization, loss, optimizer, learning
 rate schedule) is a registry: a dict name -> implementation. One function reports
 an unknown name the same way for all of them, naming the choices, so a typo in a
 configuration is refused before anything is trained or written.

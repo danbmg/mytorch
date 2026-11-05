@@ -13,7 +13,9 @@ def confusion_matrix(y_true, y_pred, n_classes):
 
 
 def per_class(cm):
-    tp, predicted, support = np.diag(cm).astype(float), cm.sum(axis=0), cm.sum(axis=1)
+    tp = np.diag(cm).astype(float)  # true positives of each class
+    predicted = cm.sum(axis=0)  # samples predicted as each class
+    support = cm.sum(axis=1)  # samples of each class
     with np.errstate(divide="ignore", invalid="ignore"):
         precision = np.where(predicted > 0, tp / predicted, 0.0)
         recall = np.where(support > 0, tp / support, 0.0)
@@ -28,7 +30,9 @@ def macro_f1(cm):
 
 def report(cm, labels):
     """Precision / recall / F1 / support of each class, accuracy, macro F1, then the confusion matrix."""
-    s, width, total = per_class(cm), max(len(label) for label in labels) + 2, cm.sum()
+    s = per_class(cm)
+    width = max(len(label) for label in labels) + 2
+    total = cm.sum()
     lines = [f"{'':<{width}}precision  recall      f1  support"]
     lines += [f"{label:<{width}}{s['precision'][i]:9.4f}{s['recall'][i]:8.4f}{s['f1'][i]:8.4f}{s['support'][i]:9d}"
               for i, label in enumerate(labels)]

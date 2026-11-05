@@ -44,7 +44,8 @@ def _layer(layer, where, last, default_init):
     check(dropout == 0 or not last, f"{where}.dropout", "the output layer cannot use dropout")
     init = _init(layer.get("init", default_init), f"{where}.init")
     alpha = fill({k: layer[k] for k in alpha if k in layer}, alpha, where)
-    return {"size": layer["size"], "activation": act, **alpha, "dropout": float(dropout), "init": resolve(init, act)}
+    return {"size": layer["size"], "activation": act, **alpha,
+            "dropout": float(dropout), "init": resolve(init, act)}
 
 
 def _layers(layers, default_init):
@@ -76,8 +77,9 @@ def _schedule(spec):
 
 def _labels(labels, n_out):
     if labels is not None:
-        check(isinstance(labels, list) and all(isinstance(x, str) for x in labels) and len(set(labels)) == len(labels),
-              "labels", "must be a list of distinct strings")
+        distinct_strings = isinstance(labels, list) and all(isinstance(x, str) for x in labels) \
+            and len(set(labels)) == len(labels)
+        check(distinct_strings, "labels", "must be a list of distinct strings")
         check(len(labels) == n_out, "labels", f"{len(labels)} labels for an output layer of size {n_out}")
     return labels
 
@@ -113,7 +115,8 @@ def normalize_config(config):
     out["optimizer"] = _optimizer(cfg.get("optimizer"))
     out["lr_schedule"] = _schedule(cfg.get("lr_schedule"))
     out["training"] = normalize_training(cfg.get("training"))
-    labels, seed = _labels(cfg.get("labels"), out["layers"][-1]["size"]), cfg.get("seed")
+    out["labels"] = _labels(cfg.get("labels"), out["layers"][-1]["size"])
+    seed = cfg.get("seed")
     check(seed is None or is_int(seed, 0), "seed", "must be null or an integer >= 0")
-    out.update(labels=labels, seed=seed)
+    out["seed"] = seed
     return out

@@ -40,7 +40,8 @@ DEFENDERS = ["", "", "", "P", "P", "PP", "B", "N", "R", "PPP"]
 def place(rng):
     """A random legal position with the material above, or None."""
     white = rng.random() < 0.5  # side to move = the side that may be stalemated
-    squares, free = ["."] * 64, set(range(64))
+    squares = ["."] * 64
+    free = set(range(64))
 
     def put(piece, choices):
         choices = [s for s in choices if s in free and not (piece in "Pp" and s // 8 in (0, 7))]
@@ -57,7 +58,8 @@ def place(rng):
     for piece in rng.choice(ATTACKERS):
         put(other(piece), range(64))
     board = Board(squares, white)
-    (wr, wc), (br, bc) = divmod(board.king(True), 8), divmod(board.king(False), 8)
+    wr, wc = divmod(board.king(True), 8)
+    br, bc = divmod(board.king(False), 8)
     # adjacent kings, or the side that just moved left in check: illegal
     if (abs(wr - br) <= 1 and abs(wc - bc) <= 1) or attacked(squares, board.king(not white), white):
         return None
@@ -72,13 +74,23 @@ def classify(board):
         if n > 2:
             break
     if in_check(board):
-        return ("Check" if n else "Checkmate"), f"{'Check' if n else 'Checkmate'} {'Black' if board.white else 'White'}"
-    return ("Stalemate", "Stalemate") if n == 0 else ("Nothing (near)" if n <= 2 else "Nothing (any)", "Nothing")
+        kind = "Check" if n else "Checkmate"
+        attacker = "Black" if board.white else "White"
+        return kind, f"{kind} {attacker}"
+    if n == 0:
+        return "Stalemate", "Stalemate"
+    return ("Nothing (near)" if n <= 2 else "Nothing (any)"), "Nothing"
 
 
 def work(seed):
+    """BATCH random draws with this seed -> [(fen, quota, label)] of the legal positions."""
     rng = random.Random(seed)
-    return [(board.to_fen(), *classify(board)) for board in (place(rng) for _ in range(BATCH)) if board is not None]
+    found = []
+    for _ in range(BATCH):
+        board = place(rng)
+        if board is not None:
+            found.append((board.to_fen(), *classify(board)))
+    return found
 
 
 def main(argv):
@@ -94,7 +106,11 @@ def main(argv):
         return 84
     quotas = {"Stalemate": args.count, "Nothing (near)": args.count, "Nothing (any)": args.count // 2,
               "Check": args.count // 2, "Checkmate": args.count // 2}
-    filled, seen, lines, drawn, t0 = dict.fromkeys(quotas, 0), set(), [], 0, time.perf_counter()
+    filled = dict.fromkeys(quotas, 0)
+    seen = set()
+    lines = []
+    drawn = 0
+    start = time.perf_counter()
     with mp.get_context("spawn").Pool(args.workers) as pool:
         # task i has its own seed: the result only depends on --seed
         for batch in pool.imap(work, (args.seed * 1000003 + i for i in range(10**9))):
@@ -107,7 +123,8 @@ def main(argv):
             if filled == quotas:
                 pool.terminate()
                 break
-    print(f"{len(lines)} positions kept out of {drawn} drawn in {time.perf_counter() - t0:.0f}s", file=sys.stderr)
+    seconds = time.perf_counter() - start
+    print(f"{len(lines)} positions kept out of {drawn} drawn in {seconds:.0f}s", file=sys.stderr)
     os.makedirs(args.out, exist_ok=True)
     with open(os.path.join(args.out, "generated.txt"), "w", encoding="utf-8") as f:
         f.write("\n".join(lines) + "\n")

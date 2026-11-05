@@ -13,8 +13,12 @@ import math
 class EarlyStopping:
     def __init__(self, net, spec):
         """spec: None (track the best epoch only) or {"patience", "min_delta", "restore_best"}."""
-        self.net, self.spec = net, spec
-        self.best_loss, self.best_epoch, self.best_weights, self.wait = math.inf, None, None, 0
+        self.net = net
+        self.spec = spec
+        self.best_loss = math.inf
+        self.best_epoch = None
+        self.best_weights = None
+        self.wait = 0  # epochs since the last improvement
 
     @property
     def patience(self):
@@ -22,8 +26,11 @@ class EarlyStopping:
 
     def update(self, epoch, val_loss):
         """Record this epoch's validation loss -> True when the training must stop."""
-        if val_loss < self.best_loss - (self.spec["min_delta"] if self.spec else 0.0):
-            self.best_loss, self.best_epoch, self.wait = val_loss, epoch, 0
+        min_delta = self.spec["min_delta"] if self.spec else 0.0
+        if val_loss < self.best_loss - min_delta:
+            self.best_loss = val_loss
+            self.best_epoch = epoch
+            self.wait = 0
             if self.spec and self.spec["restore_best"]:
                 self.best_weights = self.net.get_weights()
         else:

@@ -1,10 +1,11 @@
 """Reading a .nn file: the archive is checked, then the header (format and
-version), then the network is rebuilt from its config and weights.
+version), then every weight array is read in memory.
 
 Every failure is a NetworkFormatError naming the file and what is wrong, so
 the analyzer can report it without a traceback. A file of a newer format
 version than this program is refused rather than misread; older versions
-would be converted in upgrade() (none yet).
+would be converted in upgrade() (none yet). This module only reads files:
+Network.load() builds the network from what it returns.
 """
 
 import io
@@ -14,8 +15,7 @@ import zipfile
 
 import numpy as np
 
-from ..errors import ConfigError, NetworkFormatError
-from ..network import Network
+from ..errors import NetworkFormatError
 from .writer import FORMAT, FORMAT_VERSION
 
 
@@ -57,34 +57,18 @@ def upgrade(header):
     return header
 
 
-def _open(path):
-    data = _archive(path)
-    return data, _header(path, data)
-
-
 def read_header(path):
-    """Header of a .nn file, without building the network."""
-    return _open(path)[1]
+    """Header of a .nn file, without reading the weights."""
+    with _archive(path) as data:
+        return _header(path, data)
 
 
-def _weights(path, data, net):
-    try:
-        net.set_weights([(data[f"W{i}"], data[f"b{i}"]) for i in range(len(net.layers))])
-    except KeyError as e:
-        raise NetworkFormatError(f"{path}: missing weights {e}") from None
-    except (ValueError, OSError, zipfile.BadZipFile) as e:
-        raise NetworkFormatError(f"{path}: corrupted weights ({e})") from None
-
-
-def load_network(path):
-    """Rebuild a Network from a .nn file. Raises NetworkFormatError if the file is unusable."""
-    data, header = _open(path)
-    with data:
+def read_network_file(path):
+    """(header, arrays) of a .nn file: the checked header and {"W0": ..., "b0": ...}."""
+    with _archive(path) as data:
+        header = _header(path, data)
         try:
-            net = Network(header["config"])
-        except (KeyError, ConfigError) as e:
-            raise NetworkFormatError(f"{path}: invalid network config ({e})") from None
-        _weights(path, data, net)
-    net.meta.update(header.get("meta") or {})
-    net.history = header.get("history") or {}
-    return net
+            arrays = {name: data[name] for name in data.files if name != "header"}
+        except (ValueError, EOFError, OSError, zipfile.BadZipFile) as e:
+            raise NetworkFormatError(f"{path}: corrupted weights ({e})") from None
+    return header, arrays

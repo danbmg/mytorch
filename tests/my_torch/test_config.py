@@ -30,7 +30,7 @@ class TestConfig(unittest.TestCase):
             (xor_config(training={"early_stopping": {"patience": 0}}), "training.early_stopping.patience"),
             (xor_config(labels=["a"]), "1 labels for an output layer of size 2"),
             ({"layers": []}, "missing 'input_size'"),
-            (xor_config(colour="red"), "unknown key(s) colour"),
+            (xor_config(color="red"), "unknown key(s) color"),
         ]
         for config, message in cases:
             with self.subTest(message=message):

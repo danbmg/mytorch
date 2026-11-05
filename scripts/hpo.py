@@ -4,7 +4,7 @@
 usage: python3 scripts/hpo.py SEARCH.json --data DATA.npz [--out DIR] [--workers N]
 
 SEARCH.json: {"base": "configs/basic.conf", "method": "random", "space": {...}, "trials": 24,
-"epochs": 15, "train_samples": 150000, ...} (see configs/search/ and my_torch/hpo.py).
+"epochs": 15, "train_samples": 150000, ...} (see configs/search/ and my_torch/hpo/).
 Writes in DIR (default results/hpo_<name>): trials.csv (genes and metrics of every
 training), best.conf (ready for scripts/train.py or my_torch_generator) and hpo.png.
 """
@@ -85,7 +85,8 @@ def main(argv):
         return train_many(configs, data["X_train"], data["Y_train"], data["X_val"], data["Y_val"], workers=args.workers,
                           fit_kwargs={"epochs": s["epochs"]} if s["epochs"] else {}, on_result=show)
 
-    rng, t0 = np.random.default_rng(s["seed"]), time.perf_counter()
+    rng = np.random.default_rng(s["seed"])
+    t0 = time.perf_counter()
     try:
         if s["method"] == "grid":
             results = hpo.grid_search(search["space"], base, evaluate)

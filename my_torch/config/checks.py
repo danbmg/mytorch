@@ -31,7 +31,8 @@ def fill(spec, defaults, where):
     check_keys(spec, defaults, where)
     out = {**defaults, **spec}
     for key, default in defaults.items():
-        value, here = out[key], f"{where}.{key}"
+        value = out[key]
+        here = f"{where}.{key}"
         if isinstance(default, bool):
             check(isinstance(value, bool), here, "must be true or false")
         elif isinstance(default, int) or default is None:

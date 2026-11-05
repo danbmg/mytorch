@@ -13,6 +13,8 @@ Chiffres : `docs/benchmarks.md` (§ entre parenthèses).
 | **ReLU, init He** (`auto`) | 70,7 % contre 63,5 % pour la sigmoïde, qui sature (§6) ; He garde la variance d'une couche à l'autre [He 2015] | sigmoïde, tanh |
 | **512 > 256** (premier réseau final) | 88,9 % contre 88,0 % (256 > 128) et 86,9 % (512 seul) sur tout le train ; une 3ᵉ couche coûte 7 % de temps pour 0 gain (§3). Contraintes : profondeur ↔ temps ↔ quantité de données | la couche unique qui gagnait sur 150k positions |
 | **Miroirs de couleurs au train, puis 1024 > 512** | à architecture égale, les miroirs font passer le test de 90,15 à 93,52 % ; 1024 > 512 ajoute 0,30 point et a la meilleure val_loss (§9). Contraintes : accuracy ↔ fichier 2,5× plus gros et `--predict` 1,8× plus lent | 512 > 256 avec miroirs (plus léger, 0,30 point de moins) |
+| **Les 4 symétries** (couleurs, colonnes a↔h) : train ×4, et `--predict` moyenne les 4 versions de chaque plateau | les labels des 4 versions sont prouvés justes par le générateur de coups (723 019 positions) ; même config, même seed : 93,82 → 95,01 % pour le réseau seul, 95,34 % avec la moyenne (§10). Contraintes : accuracy ↔ entraînement 2× plus long par epoch et 4 passages par prédiction | ensemble de deux réseaux (95,00 % en validation contre 95,19 %) ; 2 versions seulement à la prédiction (95,10 %) |
+| **1ʳᵉ couche par lignes actives à la prédiction** | le dump n'a que le BLAS de référence ; un plateau a 15 entrées à 1 sur 773 : additionner 15 lignes de `W` donne les mêmes sorties au bit près, 2,4× plus vite (§7) | produit matriciel partout (`--predict` 2,4× plus long sur le dump) |
 | **Adam**, lr 1e-3, β 0,9 / 0,999 | valeurs de l'article [Kingma 2015] ; converge 5× plus vite que SGD (§6) ; la recherche aléatoire ne fait pas mieux (§4) | SGD, Momentum, RMSprop |
 | **Plateau** (×0,5 après 2 epochs sans progrès) | 89,3 % contre 88,0 à 88,4 % pour les autres schedules (§2) | exponentielle (`basic`), step, cosinus |
 | **Batch 256** | 2,2× moins cher que 32 pour 1 point de moins ; 4096 ne converge pas (§6). Contraintes : stabilité ↔ temps | 32, 4096 |
@@ -32,9 +34,10 @@ Chiffres : `docs/benchmarks.md` (§ entre parenthèses).
 
 ## 3. Impact business
 
-- **Taille ↔ temps ↔ matériel** : le réseau final gagne 2,2 points pour 2,3× plus de calcul. Pas de GPU sur le dump, donc tout est optimisé pour le CPU (99×, 2,4×, 2,6×, §7). La prédiction ne coûte presque rien (54 000 positions/s) : le coût est à l'entraînement. Pour réentraîner souvent, `basic` suffit (3,4 min).
+- **Taille ↔ temps ↔ matériel** : le réseau final gagne 5,7 points sur `basic` (95,34 % contre 89,61 %) pour 5,7× plus de paramètres et 3,2 h d'entraînement au lieu de 3,4 min. Pour réentraîner souvent, `basic` suffit. Pas de GPU sur le dump, donc tout est optimisé pour le CPU (99×, 2,4×, 2,6×, §7).
+- **Le logiciel compte autant que le matériel** : le même numpy, sans OpenBLAS, est 10 à 40× plus lent. C'est le cas du dump (image `epitechcontent/epitest-docker`, vérifiée) et du numpy d'Ubuntu par défaut. Un client qui déploie le réseau sur un numpy sans OpenBLAS paie la même prédiction 10 à 40× plus cher en temps machine. Notre parade se mesure : la 1ʳᵉ couche par lignes actives, et un `--predict` de 0,48 s pour 1 000 plateaux sur le dump (§7) ; le README dit quel paquet installer.
 - **De zéro plutôt qu'un framework** : imposé par le sujet. En entreprise, on prendrait le framework, puisque le temps d'ingénieur coûte plus que le temps machine. Ici, on y gagne zéro dépendance lourde et chaque ligne est explicable.
-- **Coût des données** : chaque doublement rapporte 5 à 7 points, sans plateau (§5). Aucun réglage n'a rapporté autant : investir dans les données avant d'investir dans le réglage. Générer des données sûres a un prix : 12,8 millions de tirages pour 30 000 pats (141 s sur 4 cœurs).
+- **Coût des données** : chaque doublement rapporte 5 à 7 points, sans plateau (§5). Aucun réglage n'a rapporté autant : investir dans les données avant d'investir dans le réglage. Les symétries sont des données gratuites (4× le train sans rien étiqueter, +1,2 point pour le réseau seul, §10), à condition de prouver leurs labels : 20 s de vérification par le générateur de coups. Générer des données sûres a un prix : 12,8 millions de tirages pour 30 000 pats (141 s sur 4 cœurs).
 
 ## 4. Pièges et parades
 
@@ -43,19 +46,22 @@ Chiffres : `docs/benchmarks.md` (§ entre parenthèses).
 | Accuracy qui masque le déséquilibre : 41,6 % de `Nothing`, donc un réseau constant fait déjà 41,6 % | F1 par classe et macro, matrice de confusion, score par sous-ensemble dans chaque rapport ; split stratifié |
 | Réseau sur-appris (100 % train / 70 % validation à 100k positions) | test jamais utilisé pour choisir ; L2, dropout, early stopping ; `--train` garde 10 % du fichier pour valider |
 | Fuite train → test (7 460 doublons) | déduplication sur la position avant le split |
-| Sauvegarde illisible après un changement de format | `format_version` dans chaque fichier ; version plus récente refusée avec un message clair ; `_upgrade()` prévu pour convertir |
+| Sauvegarde illisible après un changement de format | `format_version` dans chaque fichier ; version plus récente refusée avec un message clair ; `upgrade()` (`my_torch/serialization/reader.py`) prévu pour convertir |
 | `--train` sans `--save` écrase le réseau | `.bak` + écriture atomique ; dossier de destination vérifié **avant** l'entraînement ; un Ctrl-C n'écrit rien |
 | Label sans couleur (l'exemple du sujet montre `Check`) | labels stockés dans le `.nn`, toujours avec la couleur |
 | FEN invalide traitée en silence | chaque ligne est validée ; erreur avec `fichier:ligne`, code 84, rien sur stdout |
+| Une augmentation qui fabrique de faux labels (un miroir mal fait apprend des erreurs au réseau) | le générateur de coups vérifie le label des 4 versions des 723 019 positions et des 105 000 du bonus (`bonus/validate_movegen.py --symmetries`) ; un test vérifie que l'encodage transformé est celui du FEN transformé |
+| Un test qui fuit par les symétries (le miroir d'un plateau du train dans le test) | mesuré : 679 plateaux du test (0,95 %) ; sans eux, 95,31 % au lieu de 95,34 %, le même gain (§10) |
+| Un environnement plus lent que le nôtre (le dump n'a pas OpenBLAS) | mesuré dans l'image officielle ; 1ʳᵉ couche par lignes actives à la prédiction (§7) |
 
 ## 5. L'utilisateur
 
-`--help` détaillé ; des erreurs qui disent quoi corriger, jamais de traceback. stdout propre en `--predict` : le résumé ne s'affiche sur stderr que dans un terminal. Une ligne par epoch plus un pourcentage, et `curves.png` redessiné à chaque epoch. `inspect_nn.py` montre ce que contient un réseau. 6,5 s par epoch, et `--epochs N` pour un essai rapide.
+`--help` détaillé, qui dit aussi que chaque réponse est la moyenne sur les 4 symétries du plateau ; des erreurs qui disent quoi corriger, jamais de traceback. stdout propre en `--predict` : le résumé ne s'affiche sur stderr que dans un terminal. Une ligne par epoch plus un pourcentage, et `curves.png` redessiné à chaque epoch. `inspect_nn.py` montre ce que contient un réseau. 6,5 s par epoch, et `--epochs N` pour un essai rapide.
 
 ## 6. « Si vous recommenciez ? »
 
-1. **Choisir les hyperparamètres par successive halving** [Hyperband, Li 2018] : beaucoup de configs à petit budget, puis la meilleure moitié à budget double, jusqu'aux données complètes. Notre recherche sur 150k positions a désigné le pire candidat (§3). Pour le même calcul, les dernières décisions se prennent dans les conditions réelles. C'est une méthode de plus dans `my_torch/hpo.py`, pas une réécriture.
-2. **Rééquilibrer les mats des positions chargées** (rappel 77 %, la classe la plus rare) en pondérant la perte par classe. On échange un peu de précision sur `Check` contre du rappel là où on rate le plus.
+1. **Choisir les hyperparamètres par successive halving** [Hyperband, Li 2018] : beaucoup de configs à petit budget, puis la meilleure moitié à budget double, jusqu'aux données complètes. Notre recherche sur 150k positions a désigné le pire candidat (§3). Pour le même calcul, les dernières décisions se prennent dans les conditions réelles. C'est une méthode de plus dans `my_torch/hpo/search.py`, pas une réécriture.
+2. **Rééquilibrer les mats des positions chargées** (rappel 85 %, la classe la plus rare) en pondérant la perte par classe. On échange un peu de précision sur `Check` contre du rappel là où on rate le plus.
 3. **Le pipeline de données d'abord** : les scripts d'expérience ont attendu le dataset encodé. Il aurait fallu le faire le premier jour, avec un réseau factice.
 
 Envisagé et écarté : donner en entrée les cases attaquées (on ferait le travail du réseau à sa place) ; une couche convolutive (plus naturelle pour des motifs d'attaque, mais une implémentation de plus, et lente sur CPU sans bibliothèque).

@@ -40,10 +40,10 @@ def _board(board):
     if len(rows) != 8:
         raise FenError(f"the board needs 8 ranks separated by '/', got {len(rows)}")
     pieces = [piece for row, text in enumerate(rows) for piece in _rank(row, text)]
-    for king, colour in (("K", "white"), ("k", "black")):
+    for king, color in (("K", "white"), ("k", "black")):
         count = sum(piece == king for _, piece in pieces)
         if count != 1:
-            raise FenError(f"the board needs exactly one {colour} king, got {count}")
+            raise FenError(f"the board needs exactly one {color} king, got {count}")
     return pieces
 
 

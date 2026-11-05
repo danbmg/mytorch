@@ -1,7 +1,7 @@
 """Initial weights. Goal: keep the variance of the signal about constant from one
 layer to the next, so that it neither vanishes nor explodes. Biases start at 0.
 
-A registry name -> function; "auto" picks the initialisation each activation was
+A registry name -> function; "auto" picks the initialization each activation was
 designed with, so a configuration only has to say it when it wants another one.
 """
 
@@ -29,7 +29,7 @@ def uniform(n_in, n_out, rng):
 
 
 INITS = {"he": he, "xavier": xavier, "lecun": lecun, "uniform": uniform}
-# "auto": the initialisation each activation was designed with (default: xavier)
+# "auto": the initialization each activation was designed with (default: xavier)
 AUTO = {"relu": "he", "leaky_relu": "he", "elu": "he", "linear": "lecun"}
 
 
