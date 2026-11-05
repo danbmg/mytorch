@@ -1,6 +1,6 @@
 # Training report: basic
 
-- `my_torch_network_basic.nn`: 256 relu > 128 relu > 5 softmax, 231685 parameters, config `configs/basic.conf`
+- `docs/networks/baseline_basic.nn`: 256 relu > 128 relu > 5 softmax, 231685 parameters, config `configs/basic.conf`
 - 30 epochs in 202s on 572446 boards, best epoch 30 (val_loss 0.3035)
 
 ![learning curves](curves.png)

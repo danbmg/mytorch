@@ -7,7 +7,7 @@ Réseau de neurones **écrit de zéro** (Python + numpy, aucune bibliothèque de
 | Réseau | Architecture | Accuracy | F1 macro | Entraînement |
 |---|---|---|---|---|
 | **`my_torch_network_final.nn`** | 773 > 1024 > 512 > 5 | **93,82 %** | **0,924** | 59 epochs, 3,6 h, train doublé par les miroirs de couleurs |
-| `my_torch_network_basic.nn` (référence) | 773 > 256 > 128 > 5 | 87,95 % | 0,863 | 30 epochs, 3,4 min |
+| `docs/networks/baseline_basic.nn` (référence) | 773 > 256 > 128 > 5 | 87,95 % | 0,863 | 30 epochs, 3,4 min |
 | `bonus/my_torch_network_stalemate.nn` | 773 > 512 > 256 > 6 | 90,48 % (pats : F1 0,869) | 0,887 | 50 epochs, 19 min |
 
 Comment on est arrivé au réseau final : `docs/benchmarks.md`. Pourquoi chaque choix : `docs/decisions.md`. Rapports d'entraînement : `docs/report/`.
