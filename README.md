@@ -64,7 +64,7 @@ sh scripts/run_experiments.sh                   # toutes les expériences de doc
 python3 bonus/gen_stalemate.py                  # bonus : voir bonus/README.md
 ```
 
-Seeds fixées partout (split, initialisation, mélange) : la même commande redonne le même réseau, au bit près.
+Seeds fixées partout (split, initialisation, mélange) : sur la même machine, avec le même numpy et le même nombre de threads BLAS (`OPENBLAS_NUM_THREADS`), la même commande redonne le même réseau, au bit près. Ailleurs, la bibliothèque de calcul matriciel (BLAS) peut additionner dans un autre ordre : les poids diffèrent dans les dernières décimales, et l'entraînement suit un chemin proche sans être identique. Le réseau livré a été entraîné dans un conteneur `python:3.12-slim` + numpy 1.26.4, OpenBLAS 6 threads (`docs/benchmarks.md` §10).
 
 ## Organisation
 

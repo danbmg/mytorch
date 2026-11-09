@@ -32,7 +32,7 @@ def plain(config, **training):
     cfg = normalize_config(copy.deepcopy(config))
     for layer in cfg["layers"]:
         layer["dropout"] = 0.0
-    cfg["training"].update(early_stopping=None, eval_train_samples=0, l2=0.0, grad_clip=None, **training)
+    cfg["training"].update({"early_stopping": None, "eval_train_samples": 0, "l2": 0.0, "grad_clip": None, **training})
     cfg["lr_schedule"] = {"name": "constant"}
     return cfg
 
