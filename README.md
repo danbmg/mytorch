@@ -23,12 +23,15 @@ Python ≥ 3.10 et numpy (matplotlib pour les scripts). Sur Ubuntu : `sudo apt i
 
 ```bash
 make && make tests_run                                                  # my_torch_analyzer, my_torch_generator, 50 tests
-./my_torch_analyzer --predict my_torch_network_final.nn boards.txt       # une prédiction par ligne, rien d'autre sur stdout
-./my_torch_analyzer --train --save new.nn my_torch_network_final.nn train.txt   # sans --save : écrase et garde un .bak
+./my_torch_analyzer --predict my_torch_network_final.nn dataset/check/10_pieces.txt   # une prédiction par ligne, rien d'autre sur stdout
+python3 scripts/dedup_split.py                                          # dataset/ -> data/{train,val,test}.txt, requis pour les deux lignes marquées *
+./my_torch_analyzer --train --save new.nn my_torch_network_final.nn data/train.txt   # * sans --save : écrase et garde un .bak
 ./my_torch_generator configs/basic.conf 3                               # basic_1.nn … basic_3.nn, réseaux vierges
 python3 scripts/inspect_nn.py my_torch_network_final.nn                  # couches, hyperparamètres, poids
-sh scripts/demo.sh                                                      # démo de soutenance pas à pas
+sh scripts/demo.sh                                                      # * démo de soutenance pas à pas (Entrée entre chaque étape)
 ```
+
+Un fichier d'entrée contient une position FEN par ligne. `dataset/` en fournit déjà, rangées par label (`check/`, `checkmate/`, `nothing/`).
 
 Erreur (argument, fichier, FEN invalide avec son numéro de ligne, réseau illisible) : message sur stderr et code 84.
 
