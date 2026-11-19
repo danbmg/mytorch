@@ -1,5 +1,7 @@
 # my_torch
 
+> 🎓 Projet Epitech (3e année, Epitech Nice, 2026), réalisé en équipe.
+
 Réseau de neurones **écrit de zéro** (Python + numpy, aucune bibliothèque de ML) et analyseur d'échiquier : pour chaque position FEN, il prédit `Nothing`, `Check White`, `Check Black`, `Checkmate White` ou `Checkmate Black` (couleur = camp qui donne l'échec).
 
 ## Résultats (test : 71 557 positions jamais vues)
